@@ -65,7 +65,7 @@
     "@sabaki/boardmatcher": "^0.1.5-beta",
     "@sabaki/deadstones": "^2.1.0",
     "@sabaki/gtp": "^1.4.0",
-    "@sabaki/immutable-gametree": "^1.0.1",
+    "@sabaki/immutable-gametree": "^1.1.0",
     "@sabaki/influence": "^1.1.4",
     "@sabaki/sgf": "^3.0.0",
     "@sabaki/shudan": "^1.3.2",
