@@ -704,7 +704,7 @@ class App extends Component {
                 ) {
                     // Show annotation context menu
 
-                    this.openCommentMenu(tree, index, {x, y})
+                    this.openCommentMenu(tree, treePosition, {x, y})
                 } else if (this.state.analysis != null) {
                     // Show analysis context menu
 
@@ -1084,7 +1084,7 @@ class App extends Component {
                     ) {
                         board.markers[y][x] = null
                     } else {
-                        let number = !node.LB ? 1 : node.LB
+                        let number = node.data.LB == null ? 1 : node.data.LB
                             .map(x => parseFloat(x.slice(3)))
                             .filter(x => !isNaN(x))
                             .sort((a, b) => a - b)
@@ -1110,7 +1110,7 @@ class App extends Component {
                         if (label == null) {
                             let alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                             let letterIndex = Math.max(
-                                !node.LB ? 0 : node.LB
+                                node.data.LB == null ? 0 : node.data.LB
                                     .filter(x => x.length === 4)
                                     .map(x => alpha.indexOf(x[3]))
                                     .filter(x => x >= 0)
@@ -1118,7 +1118,7 @@ class App extends Component {
                                     .filter((x, i, arr) => i === 0 || x !== arr[i - 1])
                                     .concat([null])
                                     .findIndex((x, i) => i !== x),
-                                !node.L ? 0 : node.L.length
+                                node.data.L == null ? 0 : node.data.L.length
                             )
 
                             label = alpha[Math.min(letterIndex, alpha.length - 1)]
@@ -1159,7 +1159,7 @@ class App extends Component {
         })
 
         this.clearUndoPoint()
-        this.setCurrentTreePosition(newTree, treePosition)
+        this.setCurrentTreePosition(newTree, node.id)
 
         this.events.emit('toolUse', {tool, vertex, argument})
     }
@@ -1595,7 +1595,9 @@ class App extends Component {
                 clearProperties(Object.keys(moveProps))
 
                 if (data.moveAnnotation != null) {
-                    draft.updateProperty(treePosition, data.moveAnnotation, [moveProps[data.moveAnnotation]])
+                    draft.updateProperty(treePosition, data.moveAnnotation, [
+                        moveProps[data.moveAnnotation]
+                    ])
                 }
             }
 
@@ -1604,7 +1606,9 @@ class App extends Component {
                 clearProperties(Object.keys(positionProps))
 
                 if (data.positionAnnotation != null) {
-                    draft.updateProperty(treePosition, data.positionAnnotation, [moveProps[data.positionAnnotation]])
+                    draft.updateProperty(treePosition, data.positionAnnotation, [
+                        positionProps[data.positionAnnotation]
+                    ])
                 }
             }
         })
