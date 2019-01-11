@@ -66,6 +66,7 @@ class App extends Component {
             excludeMovesOp: 'set',
             excludeMovesColor: 0,
             excludeMovesNum: 1,
+            excludeMovesPassResign: [0,0,0,0],
             deadStones: [],
             blockedGuesses: [],
 
@@ -376,7 +377,8 @@ class App extends Component {
         if (mode !== 'excludeMoves') {
             this.setState({
                 excludeMovesVertex: null,
-                excludeMovesMode: null})
+                excludeMovesMode: null,
+                excludeMovesPassResign: [0,0,0,0]})
         }
 
         if (['scoring', 'estimator'].includes(mode)) {
@@ -1252,6 +1254,7 @@ class App extends Component {
             excludeMovesVertex: null,
             excludeMovesMap: [],
             excludeMovesMode: null,
+            excludeMovesPassResign: [0,0,0,0],
             treePosition: [tree, index]
         })
 

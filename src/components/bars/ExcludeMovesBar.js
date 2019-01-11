@@ -12,12 +12,13 @@ class ExcludeMovesBar extends Component {
             modeTool: 'avoid',
             opTool: 'set',
             colorTool: 0,
-            numTool: 1
+            numTool: 1,
+            passResignTool: [0,0,0,0]
         }
 
         this.handleChange = evt => {
             let numVal = parseInt(evt.currentTarget.value, 10)
-            if (isNaN(numVal) || numVal < 1) numVal = 1
+            if (isNaN(numVal) || numVal < 1) return
             this.state.numTool = numVal
             sabaki.setState({excludeMovesNum: numVal})
         }
@@ -44,13 +45,16 @@ class ExcludeMovesBar extends Component {
         excludeMovesOp,
         excludeMovesColor,
         excludeMovesNum,
+        excludeMovesPassResign,
         onToolButtonClick = helper.noop} = this.props
 
         let tool = evt.currentTarget.dataset.id
 
         if (tool === 'reset') {
+            this.setState({passResignTool: [0,0,0,0]})
             sabaki.setState({
                 excludeMovesMap: [],
+                excludeMovesPassResign: [0,0,0,0],
                 excludeMovesVertex: null
             })
         } else if (tool === 'avoid') {
@@ -94,6 +98,55 @@ class ExcludeMovesBar extends Component {
                 this.setState({colorTool: 0})
                 sabaki.setState({excludeMovesColor: 0})
             }
+        } else if (tool === 'blackandwhite') {
+            if (excludeMovesColor !== 0) {
+                this.setState({colorTool: 0})
+                sabaki.setState({excludeMovesColor: 0})
+            }
+        } else if (tool === 'pass') {
+            let passb = excludeMovesPassResign[0]
+            let passw = excludeMovesPassResign[1]
+            let resignb = excludeMovesPassResign[2]
+            let resignw = excludeMovesPassResign[3]
+            if (excludeMovesColor != -1) {
+                if (excludeMovesOp === 'set') {
+                    passb = excludeMovesNum
+                } else if (excludeMovesOp === 'clear') {
+                    passb = 0
+                }
+            }
+            if (excludeMovesColor != 1) {
+                if (excludeMovesOp === 'set') {
+                    passw = excludeMovesNum
+                } else if (excludeMovesOp === 'clear') {
+                    passw = 0
+                }
+            }
+            let newPassResign = [passb, passw, resignb, resignw]
+            this.setState({passResignTool: newPassResign})
+            sabaki.setState({excludeMovesPassResign: newPassResign})
+        } else if (tool === 'resign') {
+            let passb = excludeMovesPassResign[0]
+            let passw = excludeMovesPassResign[1]
+            let resignb = excludeMovesPassResign[2]
+            let resignw = excludeMovesPassResign[3]
+            if (excludeMovesColor != -1) {
+                if (excludeMovesOp === 'set') {
+                    resignb = excludeMovesNum
+                } else if (excludeMovesOp === 'clear') {
+                    resignb = 0
+                }
+            }
+            if (excludeMovesColor != 1) {
+                if (excludeMovesOp === 'set') {
+                    resignw = excludeMovesNum
+                } else if (excludeMovesOp === 'clear') {
+                    resignw = 0
+                }
+            }
+            let newPassResign = [passb, passw, resignb, resignw]
+            this.setState({passResignTool: newPassResign})
+            sabaki.setState({excludeMovesPassResign: newPassResign})
         }
 
         onToolButtonClick(evt)
@@ -114,27 +167,54 @@ class ExcludeMovesBar extends Component {
         )
     }
 
+    renderStyledButton(title, toolId, bNum, wNum) {
+        let toolState = ''
+        if (bNum > 0) toolState = toolState + 'b'
+        if (wNum > 0) toolState = toolState + 'w'
+        return h('li', {},
+            h('a',
+                {
+                    title,
+                    href: '#',
+                    'data-id': toolId,
+                    onClick: this.handleToolButtonClick
+                },
+
+                h('img', {src: `./img/excludeMoves/${toolId}${toolState}.svg`})
+            )
+        )
+    }
+
     render({
         mode,
         currentPlayer,
         excludeMovesMode,
         excludeMovesOp,
         excludeMovesColor,
-        excludeMovesNum
+        excludeMovesNum,
+        excludeMovesPassResign
     }) {
         return h(Bar, Object.assign({type: 'excludeMoves'}, this.props),
             h('ul', {},
                 [
-                    ['Reset All Tool', 'reset', false],
-                    ['Avoid Tool', 'avoid', excludeMovesMode === 'avoid'],
-                    ['Allow Tool', 'allow', excludeMovesMode === 'allow'],
-                    ['Set Tool', 'set', excludeMovesOp === 'set'],
-                    ['Clear Tool', 'clear', excludeMovesOp === 'clear'],
-                    ['Black Tool', 'black', excludeMovesColor == 1],
-                    ['White Tool', 'white', excludeMovesColor == -1],
-                    ['Black and White Tool', 'blackandwhite', excludeMovesColor == 0]
+                    ['Reset All', 'reset', false],
+                    ['Avoid Moves', 'avoid', excludeMovesMode === 'avoid'],
+                    ['Allow Moves', 'allow', excludeMovesMode === 'allow'],
+                    ['Set', 'set', excludeMovesOp === 'set'],
+                    ['Clear', 'clear', excludeMovesOp === 'clear'],
+                    ['Black', 'black', excludeMovesColor == 1],
+                    ['White', 'white', excludeMovesColor == -1],
+                    ['Black and White', 'blackandwhite', excludeMovesColor == 0],
                 ].map(x =>
                     this.renderButton(...x)
+                ),
+
+                this.renderStyledButton(
+                    'Avoid Pass Moves', 'pass', excludeMovesPassResign[0], excludeMovesPassResign[1]
+                ),
+
+                this.renderStyledButton(
+                    'Avoid Resign Moves', 'resign', excludeMovesPassResign[2], excludeMovesPassResign[3]
                 ),
 
                 h('input', {

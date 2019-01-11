@@ -107,6 +107,7 @@ class MainView extends Component {
         excludeMovesOp,
         excludeMovesNum,
         excludeMovesColor,
+        excludeMovesPassResign,
 
         showLeftSidebar,
         showSidebar,
@@ -252,6 +253,7 @@ class MainView extends Component {
                     excludeMovesOp,
                     excludeMovesColor,
                     excludeMovesNum,
+                    excludeMovesPassResign,
                     onToolButtonClick: this.handleExcludeMovesButtonClick
                 })
             )
