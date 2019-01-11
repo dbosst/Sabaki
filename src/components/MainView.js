@@ -7,6 +7,7 @@ const GuessBar = require('./bars/GuessBar')
 const AutoplayBar = require('./bars/AutoplayBar')
 const ScoringBar = require('./bars/ScoringBar')
 const FindBar = require('./bars/FindBar')
+const ExcludeMovesBar = require('./bars/ExcludeMovesBar')
 
 const gametree = require('../modules/gametree')
 const helper = require('../modules/helper')
@@ -19,6 +20,10 @@ class MainView extends Component {
 
         this.handleToolButtonClick = evt => {
             sabaki.setState({selectedTool: evt.tool})
+        }
+
+        this.handleExcludeMovesButtonClick = evt => {
+            sabaki.setState({excludeMovesTool: evt.tool})
         }
 
         this.handleFindButtonClick = evt => sabaki.findMove(evt.step, {
@@ -90,12 +95,18 @@ class MainView extends Component {
         showSiblings,
         fuzzyStonePlacement,
         animateStonePlacement,
+        excludeMovesMode,
 
         undoable,
         undoText,
         selectedTool,
         findText,
         findVertex,
+        excludeMovesVertex,
+        excludeMovesMap,
+        excludeMovesOp,
+        excludeMovesNum,
+        excludeMovesColor,
 
         showLeftSidebar,
         showSidebar,
@@ -144,6 +155,15 @@ class MainView extends Component {
                     highlightVertices: findVertex && mode === 'find'
                         ? [findVertex]
                         : highlightVertices,
+                    excludeMovesVertices: mode === 'excludeMoves' && excludeMovesVertex
+                        ? [excludeMovesVertex]
+                        : [],
+                    excludeMovesMap: mode === 'excludeMoves' && excludeMovesMap
+                        ? excludeMovesMap
+                        : [],
+                    excludeMovesMode: mode === 'excludeMoves' && excludeMovesMode
+                        ? excludeMovesMode
+                        : null,
                     analysis: mode === 'play'
                         && analysisTreePosition != null
                         && helper.vertexEquals(analysisTreePosition, treePosition)
@@ -223,6 +243,16 @@ class MainView extends Component {
                     mode,
                     findText,
                     onButtonClick: this.handleFindButtonClick,
+                }),
+
+                h(ExcludeMovesBar, {
+                    mode,
+                    currentPlayer,
+                    excludeMovesMode,
+                    excludeMovesOp,
+                    excludeMovesColor,
+                    excludeMovesNum,
+                    onToolButtonClick: this.handleExcludeMovesButtonClick
                 })
             )
         )

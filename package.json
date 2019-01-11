@@ -83,6 +83,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@sabaki/shudan": "github:dbosst/Shudan#excludemoves_gui",
     "electron": "^3.0.10",
     "electron-builder": "^20.36.2",
     "mocha": "^5.2.0",

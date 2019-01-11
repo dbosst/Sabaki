@@ -61,6 +61,11 @@ class App extends Component {
             scoringMethod: null,
             findText: '',
             findVertex: null,
+            excludeMovesVertex: null,
+            excludeMovesMap: [],
+            excludeMovesOp: 'set',
+            excludeMovesColor: 0,
+            excludeMovesNum: 1,
             deadStones: [],
             blockedGuesses: [],
 
@@ -74,6 +79,7 @@ class App extends Component {
             showSiblings: null,
             fuzzyStonePlacement: null,
             animateStonePlacement: null,
+            excludeMovesMode: null,
 
             // Sidebar
 
@@ -366,6 +372,12 @@ class App extends Component {
 
     setMode(mode) {
         let stateChange = {mode}
+
+        if (mode !== 'excludeMoves') {
+            this.setState({
+                excludeMovesVertex: null,
+                excludeMovesMode: null})
+        }
 
         if (['scoring', 'estimator'].includes(mode)) {
             // Guess dead stones
@@ -794,6 +806,15 @@ class App extends Component {
             } else {
                 this.setState({findVertex: vertex})
                 this.findMove(1, {vertex, text: this.state.findText})
+            }
+        } else if (this.state.mode === 'excludeMoves') {
+            if (button !== 0) return
+
+            if (this.state.excludeMovesVertex == null) {
+                this.setState({excludeMovesVertex: vertex})
+            } else {
+                this.excludeMovesAddRange({vertex1: this.state.excludeMovesVertex, vertex2: vertex})
+                this.setState({excludeMovesVertex: null})
             }
         } else if (this.state.mode === 'guess') {
             if (button !== 0) return
@@ -1228,8 +1249,15 @@ class App extends Component {
             playVariation: null,
             blockedGuesses: [],
             highlightVertices: [],
+            excludeMovesVertex: null,
+            excludeMovesMap: [],
+            excludeMovesMode: null,
             treePosition: [tree, index]
         })
+
+        if (this.state.mode === "excludeMoves") {
+            this.setState({mode: 'play'})
+        }
 
         this.events.emit('navigate')
     }
@@ -1368,6 +1396,80 @@ class App extends Component {
     stopAutoscrolling() {
         clearTimeout(this.autoscrollId)
         this.autoscrollId = null
+    }
+
+    // Exclude moves
+    async excludeMovesAddRange({vertex1, vertex2}) {
+        // add a range of vertices to excludeMovesMap
+        // note: maps in Shudan have vertices in [y,x] format
+        let [tree, index] = this.state.treePosition
+        let board = gametree.getBoard(tree, index)
+
+        let excludeVertices = []
+        let xmin = Math.min(vertex1[0], vertex2[0])
+        let xmax = Math.max(vertex1[0], vertex2[0])
+        let ymin = Math.min(vertex1[1], vertex2[1])
+        let ymax = Math.max(vertex1[1], vertex2[1])
+        for (let x = xmin; x <= xmax; x++) {
+            for (let y = ymin; y <= ymax; y++) {
+                excludeVertices.push([x, y])
+            }
+        }
+
+        let newExcludeMovesMap = this.state.excludeMovesMap
+        if (newExcludeMovesMap == null || !newExcludeMovesMap.length) {
+            newExcludeMovesMap = board.arrangement.map(row => row.map(_ => null))
+        }
+        let toolmode = this.state.excludeMovesMode
+        let op = this.state.excludeMovesOp
+        let color = this.state.excludeMovesColor
+        let num = this.state.excludeMovesNum
+
+        for (let excludeVertex of excludeVertices) {
+            let x = excludeVertex[0]
+            let y = excludeVertex[1]
+
+            let lastval = newExcludeMovesMap[y][x]
+            let lastbnum
+            let lastwnum
+            if (lastval == null || lastval.length == 0) {
+                lastbnum = 0
+                lastwnum = 0
+            } else {
+                lastbnum = lastval['bnum']
+                lastwnum = lastval['wnum']
+            }
+            let newbnum = 0
+            let newwnum = 0
+            if (op === 'set') {
+                if (toolmode === 'avoid') {
+                    newbnum = num
+                    newwnum = num
+                } else if (toolmode === 'allow') {
+                    newbnum = -num
+                    newwnum = -num
+                }
+            } else if (op === 'clear') {
+                newbnum = 0
+                newwnum = 0
+            }
+            // color = 0: both B & W, 0: B, 1: W
+            if (color == -1) {
+                newbnum = lastbnum
+            }
+            if (color == 1) {
+                newwnum = lastwnum
+            }
+            if (newbnum == 0 && newwnum == 0) {
+                newExcludeMovesMap[y][x] = null
+            } else {
+                newExcludeMovesMap[y][x] = {
+                    'bnum': newbnum,
+                    'wnum': newwnum
+                }
+            }
+        }
+        this.setState({excludeMovesMap : newExcludeMovesMap})
     }
 
     // Find Methods
