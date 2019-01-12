@@ -1472,7 +1472,54 @@ class App extends Component {
                 }
             }
 
-            /* todo? optionally compress the map using compressed point list */
+            /* compress the map using compressed point list */
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < (width - 1); x++) {
+                    let val = cmap[y][x]
+                    if (val == null) continue
+                    let xs = x + 1
+                    /* Compress single points along row */
+                    for (; xs < width; xs++) {
+                        let sval = cmap[y][xs]
+                        if (sval == null || sval != val) break
+                        cmap[y][xs] = null
+                    }
+                    xs = xs - 1
+                    if (xs == x) continue
+                    cmap[y][x] = [val, xs - x + 1, 1]
+                }
+            }
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < (height - 1); y++) {
+                    let val = cmap[y][x]
+                    if (val == null) continue
+                    let ys = y + 1
+                    let xs
+                    let num = (!val.length ? val : val[0])
+                    if (!val.length) {
+                        xs = 1
+                        /* Coompress single points along column */
+                        for (; ys < height; ys++) {
+                            let sval = cmap[ys][x]
+                            if (sval == null || sval.length) break
+                            if (sval != num) break
+                            cmap[ys][x] = null
+                        }
+                    } else {
+                        /* Compress equally sized rows along column */
+                        xs = val[1]
+                        for (; ys < height; ys++) {
+                            let sval = cmap[ys][x]
+                            if (sval == null || !sval.length) break
+                            if (sval[0] != num || sval[1] != xs) break
+                            cmap[ys][x] = null
+                        }
+                    }
+                    ys = ys - 1
+                    if (ys == y) continue
+                    cmap[y][x] = [num, xs, ys - y + 1]
+                }
+            }
 
             /* group vertices by value, with value as key */
             /* go from cmap[y][x] = val  to  group['val'] = 'Q16,..,' */
@@ -1481,20 +1528,28 @@ class App extends Component {
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     let val = cmap[y][x]
-                    if (val != null) {
-                        let valstr = val.toString()
-                        if (groups.hasOwnProperty(valstr)) {
-                            groups[valstr] += "," + board.vertex2coord([x, y])
+                    if (val == null) continue
+                    let valnum = !val.length ? val : val[0]
+                    let valstr = valnum.toString()
+                    if (groups.hasOwnProperty(valstr)) {
+                        groups[valstr] += "," +
+                            board.vertex2coord([x, y]) +
+                            (!val.length ?
+                                '' : ":" + board.vertex2coord([
+                                    x + val[1] - 1, y  + val[2] - 1]))
+                    } else {
+                        if (valnum < 0) {
+                            groups[valstr] = "allow"
                         } else {
-                            if (val < 0) {
-                                groups[valstr] = "allow"
-                            } else {
-                                groups[valstr] = "avoid"
-                            }
-                            groups[valstr] += " " + colorMap[colorIndex]
-                            groups[valstr] += " " + board.vertex2coord([x, y])
-                            propsint.push(val)
+                            groups[valstr] = "avoid"
                         }
+                        groups[valstr] += " " + colorMap[colorIndex]
+                        groups[valstr] += " " +
+                            board.vertex2coord([x, y]) +
+                            (!val.length ?
+                                '' : ":" + board.vertex2coord([
+                                    x + val[1] - 1, y  + val[2] - 1]))
+                        propsint.push(valnum)
                     }
                 }
             }
@@ -1569,7 +1624,6 @@ class App extends Component {
                 leadingSpace = ' '
             }
         }
-
         this.setState({excludeMovesLine: movesLine})
         return
     }
