@@ -101,6 +101,7 @@ class App extends Component {
             generatingMoves: false,
             analysisTreePosition: null,
             analysis: null,
+            excludeMovesLine: '',
 
             // Drawers
 
@@ -377,8 +378,8 @@ class App extends Component {
         if (mode !== 'excludeMoves') {
             this.setState({
                 excludeMovesVertex: null,
-                excludeMovesMode: null,
-                excludeMovesPassResign: [0,0,0,0]})
+                excludeMovesMode: null})
+            this.updateExcludeMovesLine()
         }
 
         if (['scoring', 'estimator'].includes(mode)) {
@@ -1402,6 +1403,177 @@ class App extends Component {
     }
 
     // Exclude moves
+
+    updateExcludeMovesLine() {
+        let movesLine = ''
+        let excludeMovesMap = this.state.excludeMovesMap
+        let excludeMovesPassResign = this.state.excludeMovesPassResign
+        let height
+        let width
+        let havemap
+
+        /* parse excludeMovesPassResign[] */
+        if (excludeMovesPassResign != null) {
+            let passb = parseInt(excludeMovesPassResign[0],10)
+            let passw = parseInt(excludeMovesPassResign[1],10)
+            let resignb = parseInt(excludeMovesPassResign[2],10)
+            let resignw = parseInt(excludeMovesPassResign[3],10)
+            passb = isNaN(passb) ? 0 : passb
+            passw = isNaN(passw) ? 0 : passw
+            resignb = isNaN(resignb) ? 0 : resignb
+            resignw = isNaN(resignw) ? 0 : resignw
+            excludeMovesPassResign = [passb, passw, resignb, resignw]
+        }
+
+        if (excludeMovesMap == null || !excludeMovesMap.length) {
+            havemap = false
+            if (excludeMovesPassResign == null ||
+                excludeMovesPassResign == [0,0,0,0]) {
+                this.setState({excludeMovesLine: movesLine})
+                return
+            }
+        } else {
+            havemap = true
+            height = excludeMovesMap.length
+            width = excludeMovesMap[0].length
+        }
+
+        let [tree, index] = this.state.treePosition
+        let board = gametree.getBoard(tree, index)
+
+        /* get [all] [y,x] with matching ".${color}num" */
+
+        /* handle black & white separately */
+        let colorMap = ['B', 'W']
+
+        for (let colorIndex of [0, 1]) {
+            if (!havemap) continue
+
+            let cmap = []
+            /* initialize */
+            for (let y = 0; y < height; y++) {
+                cmap[y] = y in cmap ? [...cmap[y]] : Array(width).fill(null)
+            }
+            /* copy all cells of this color (colorIndex) to new one color map */
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let c = excludeMovesMap[y][x]
+                    if (c != null) {
+                        let ca = [c['bnum'], c['wnum']]
+                        let val = ca[colorIndex]
+                        if (val != 0) {
+                            cmap[y][x] = ca[colorIndex]
+                        } else {
+                            cmap[y][x] = null
+                        }
+                    } else {
+                        cmap[y][x] = null
+                    }
+                }
+            }
+
+            /* todo? optionally compress the map using compressed point list */
+
+            /* group vertices by value, with value as key */
+            /* go from cmap[y][x] = val  to  group['val'] = 'Q16,..,' */
+            let propsint = []
+            let groups = {}
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let val = cmap[y][x]
+                    if (val != null) {
+                        let valstr = val.toString()
+                        if (groups.hasOwnProperty(valstr)) {
+                            groups[valstr] += "," + board.vertex2coord([x, y])
+                        } else {
+                            if (val < 0) {
+                                groups[valstr] = "allow"
+                            } else {
+                                groups[valstr] = "avoid"
+                            }
+                            groups[valstr] += " " + colorMap[colorIndex]
+                            groups[valstr] += " " + board.vertex2coord([x, y])
+                            propsint.push(val)
+                        }
+                    }
+                }
+            }
+            if (propsint == null || !propsint.length) continue
+            /* for readability, sort allow then avoid, in ascending order */
+            propsint.sort((a, b) => (
+                Math.sign(a) == Math.sign(b)) ?
+                Math.abs(a) - Math.abs(b) :
+                Math.sign(a) - Math.sign(b))
+
+            let leadingSpace
+            if (movesLine == '') {
+                leadingSpace = ''
+            } else {
+                leadingSpace = ' '
+            }
+
+            /* generate the movesLine string */
+            let lenm1 = propsint.length - 1
+            let kstr
+            for (let k = 0; k < lenm1; k++) {
+                kstr = propsint[k].toString()
+                movesLine += leadingSpace + groups[kstr] + " " + Math.abs(propsint[k]).toString()
+                leadingSpace = ' '
+            }
+            kstr = propsint[lenm1].toString()
+            movesLine += leadingSpace + groups[kstr] + " " + Math.abs(propsint[lenm1]).toString()
+            leadingSpace = ' '
+        }
+
+        if (excludeMovesPassResign == null ||
+            excludeMovesPassResign == [0,0,0,0]) {
+            this.setState({excludeMovesLine: movesLine})
+            return
+        }
+
+        let passb = excludeMovesPassResign[0]
+        let passw = excludeMovesPassResign[1]
+        let resignb = excludeMovesPassResign[2]
+        let resignw = excludeMovesPassResign[3]
+
+        let leadingSpace
+        if (movesLine == '') {
+            leadingSpace = ''
+        } else {
+            leadingSpace = ' '
+        }
+
+        if (passb > 0 && resignb > 0 && passb == resignb) {
+            movesLine += leadingSpace + "avoid B pass,resign " + passb.toString()
+            leadingSpace = ' '
+        } else {
+            if (passb > 0) {
+                movesLine += leadingSpace + "avoid B pass " + passb.toString()
+                leadingSpace = ' '
+            }
+            if (resignb > 0) {
+                movesLine += leadingSpace + "avoid B resign " + resignb.toString()
+                leadingSpace = ' '
+            }
+        }
+        if (passw > 0 && resignw > 0 && passw == resignw) {
+            movesLine += leadingSpace + "avoid W pass,resign " + passw.toString()
+            leadingSpace = ' '
+        } else {
+            if (passw > 0) {
+                movesLine += leadingSpace + "avoid W pass " + passw.toString()
+                leadingSpace = ' '
+            }
+            if (resignw > 0) {
+                movesLine += leadingSpace + "avoid W resign " + resignw.toString()
+                leadingSpace = ' '
+            }
+        }
+
+        this.setState({excludeMovesLine: movesLine})
+        return
+    }
+
     async excludeMovesAddRange({vertex1, vertex2}) {
         // add a range of vertices to excludeMovesMap
         // note: maps in Shudan have vertices in [y,x] format
@@ -1427,7 +1599,8 @@ class App extends Component {
         let op = this.state.excludeMovesOp
         let color = this.state.excludeMovesColor
         let num = this.state.excludeMovesNum
-
+        let didAllow = false
+        let didAvoid = false
         for (let excludeVertex of excludeVertices) {
             let x = excludeVertex[0]
             let y = excludeVertex[1]
@@ -1448,9 +1621,11 @@ class App extends Component {
                 if (toolmode === 'avoid') {
                     newbnum = num
                     newwnum = num
+                    didAvoid = true
                 } else if (toolmode === 'allow') {
                     newbnum = -num
                     newwnum = -num
+                    didAllow = true
                 }
             } else if (op === 'clear') {
                 newbnum = 0
@@ -1472,6 +1647,58 @@ class App extends Component {
                 }
             }
         }
+        /* Avoid and Allow are mutually exclusive per color */
+        if (didAllow) {
+            /* Need to zero all positive vertices of color to 0 */
+            let height = newExcludeMovesMap.length
+            let width = newExcludeMovesMap[0].length
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let val = newExcludeMovesMap[y][x]
+                    if (val == null) continue
+                    let count = 0
+                    if (color != -1 && val['bnum'] > 0) {
+                        val['bnum'] = 0
+                        count++
+                    }
+                    if (color != 1 && val['wnum'] > 0) {
+                        val['wnum'] = 0
+                        count++
+                    }
+                    if (count == 2) {
+                        newExcludeMovesMap[y][x] = null
+                    } else if (count == 1) {
+                        newExcludeMovesMap[y][x] = val
+                    }
+                }
+            }
+        }
+        if (didAvoid) {
+            /* Need to zero all negative vertices of color to 0 */
+            let height = newExcludeMovesMap.length
+            let width = newExcludeMovesMap[0].length
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let val = newExcludeMovesMap[y][x]
+                    if (val == null) continue
+                    let count = 0
+                    if (color != -1 && val['bnum'] < 0) {
+                        val['bnum'] = 0
+                        count++
+                    }
+                    if (color != 1 && val['wnum'] < 0) {
+                        val['wnum'] = 0
+                        count++
+                    }
+                    if (count == 2) {
+                        newExcludeMovesMap[y][x] = null
+                    } else if (count == 1) {
+                        newExcludeMovesMap[y][x] = val
+                    }
+                }
+            }
+        }
+
         this.setState({excludeMovesMap : newExcludeMovesMap})
     }
 
@@ -2363,7 +2590,18 @@ class App extends Component {
                 let name = commands.includes('analyze') ? 'analyze' : 'lz-analyze'
 
                 let interval = setting.get('board.analysis_interval').toString()
-                let response = await controller.sendCommand({name, args: [color, interval]})
+
+                let excludeMovesLine = ''
+                if (name === 'lz-analyze') {
+                    excludeMovesLine = this.state.excludeMovesLine
+                }
+
+                let response
+                if (excludeMovesLine != '') {
+                    response = await controller.sendCommand({name, args: [color, interval, excludeMovesLine]})
+                } else {
+                    response = await controller.sendCommand({name, args: [color, interval]})
+                }
 
                 error = response.error
             } else {
@@ -2438,6 +2676,20 @@ class App extends Component {
         let {commands} = this.attachedEngineSyncers[playerIndex]
         let commandName = ['genmove_analyze', 'lz-genmove_analyze', 'genmove'].find(x => commands.includes(x))
 
+        let excludeMovesLine = ''
+        if (commandName === 'lz-genmove_analyze') {
+            excludeMovesLine = this.state.excludeMovesLine
+        }
+
+        /* Must clear the excludeMoves state before waiting */
+        this.setState({
+            excludeMovesVertex: null,
+            excludeMovesMap: [],
+            excludeMovesMode: null,
+            excludeMovesPassResign: [0,0,0,0],
+            excludeMovesLine: ''
+        })
+
         let responseContent = await (
             commandName === 'genmove'
             ? playerSyncer.controller.sendCommand({name: commandName, args: [color]})
@@ -2445,15 +2697,27 @@ class App extends Component {
             : new Promise((resolve, reject) => {
                 let interval = setting.get('board.analysis_interval').toString()
 
-                playerSyncer.controller.sendCommand(
-                    {name: commandName, args: [color, interval]},
-                    ({line}) => {
-                        if (line.indexOf('play ') !== 0) return
-                        resolve(line.slice('play '.length).trim())
-                    }
-                )
-                .then(() => resolve(null))
-                .catch(reject)
+                if (excludeMovesLine === '') {
+                    playerSyncer.controller.sendCommand(
+                        {name: commandName, args: [color, interval]},
+                        ({line}) => {
+                            if (line.indexOf('play ') !== 0) return
+                            resolve(line.slice('play '.length).trim())
+                        }
+                    )
+                    .then(() => resolve(null))
+                    .catch(reject)
+                } else {
+                    playerSyncer.controller.sendCommand(
+                        {name: commandName, args: [color, interval, excludeMovesLine]},
+                        ({line}) => {
+                            if (line.indexOf('play ') !== 0) return
+                            resolve(line.slice('play '.length).trim())
+                        }
+                    )
+                    .then(() => resolve(null))
+                    .catch(reject)
+                }
             })
         ).catch(() => null)
 
