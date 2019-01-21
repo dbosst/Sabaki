@@ -395,6 +395,13 @@ let data = [
                 }
             },
             {
+                label: '&Exclude Moves',
+                click: () => {
+                    sabaki.setMode('excludeMoves')
+                    sabaki.setState({excludeMovesMode: 'avoid'})
+                }
+            },
+            {
                 label: 'Start &Playing',
                 accelerator: 'F5',
                 click: () => sabaki.generateMove({analyze: sabaki.state.analysis != null, followUp: true})

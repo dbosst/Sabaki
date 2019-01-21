@@ -172,6 +172,7 @@ header, #bar .bar {
         filter: invert(100%);
     }
     .edit #bar { background: #C4BD64; }
+    .excludeMoves #bar { background: #C4BD64; }
     .scoring #bar, .estimator #bar { background: #C42311; }
     .find #bar { background: #0050C0; }
     .guess #bar { background: #823499; }
@@ -259,6 +260,51 @@ header, #bar .bar {
         background: #9F962C;
     }
     #edit ul li a img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin-left: -10px;
+        margin-top: -10px;
+}
+
+#excludeMoves {
+        color: #333;
+    }
+    #excludeMoves ul {
+        display: table;
+        margin: 0 auto;
+        overflow: hidden;
+        list-style: none;
+    }
+    #excludeMoves ul li {
+        margin: 0 2px;
+        float: left;
+    }
+    #excludeMoves ul li a {
+        position: relative;
+        display: block;
+        height: 40px;
+        width: 35px;
+    }
+    #excludeMoves button:focus { background: #001080; }
+    #excludeMoves button img {
+        filter: invert(100%);
+    }
+    #excludeMoves input {
+        width: calc(3em + 5px);
+    }
+    .excludeMoves #excludeMoves ul li a:hover {
+        background: #B3AC53;
+    }
+    .excludeMoves #excludeMoves ul li a:active {
+        background: #8E851B;
+    }
+    .excludeMoves #excludeMoves ul li.selected a {
+        background: #9F962C;
+    }
+    #excludeMoves ul li a img {
         position: absolute;
         top: 50%;
         left: 50%;

@@ -132,6 +132,30 @@ class Goban extends Component {
     }
 
     handleVertexMouseEnter(evt, vertex) {
+        if (this.props.excludeMovesMode != null &&
+            this.props.excludeMovesVertices != null &&
+            this.props.excludeMovesVertices.length) {
+
+            let originVertex = this.props.excludeMovesVertices[0]
+            let excludeVertices = []
+            /* Keep the array so the originVertex is at the beginning */
+            excludeVertices.push(originVertex)
+            if (!helper.vertexEquals(vertex, originVertex)) {
+                let xmin = Math.min(vertex[0], originVertex[0])
+                let xmax = Math.max(vertex[0], originVertex[0])
+                let ymin = Math.min(vertex[1], originVertex[1])
+                let ymax = Math.max(vertex[1], originVertex[1])
+                for (let x = xmin; x <= xmax; x++) {
+                    for (let y = ymin; y <= ymax; y++) {
+                        if (x != originVertex[0] || y != originVertex[1])
+                            excludeVertices.push([x, y])
+                    }
+                }
+            }
+            this.props.excludeMovesVertices = excludeVertices
+            /* Update Goban component */
+            this.setState({})
+        }
         if (this.props.analysis == null) return
 
         let {sign, variation} = this.props.analysis.find(x => helper.vertexEquals(x.vertex, vertex)) || {}
@@ -238,6 +262,8 @@ class Goban extends Component {
         paintMap,
         analysis,
         highlightVertices = [],
+        excludeMovesVertices = [],
+        excludeMovesMap = [],
         dimmedStones = [],
 
         crosshair = false,
@@ -247,6 +273,7 @@ class Goban extends Component {
         showSiblings = true,
         fuzzyStonePlacement = true,
         animateStonePlacement = true,
+        excludeMovesMode = null,
 
         drawLineMode = null
     }, {
@@ -383,6 +410,9 @@ class Goban extends Component {
             heatMap,
             lines,
             selectedVertices: highlightVertices,
+            excludeMovesVertices: excludeMovesVertices,
+            excludeMovesMap: excludeMovesMap,
+            excludeMovesMode: excludeMovesMode,
             dimmedVertices: dimmedStones,
 
             onVertexMouseUp: this.handleVertexMouseUp,
