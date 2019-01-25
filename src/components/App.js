@@ -337,8 +337,7 @@ class App extends Component {
             'view.animated_stone_placement': 'animateStonePlacement',
             'graph.grid_size': 'graphGridSize',
             'graph.node_size': 'graphNodeSize',
-            'engines.list': 'engines',
-            'scoring.method': 'scoringMethod'
+            'engines.list': 'engines'
         }
 
         if (key == null) {
@@ -445,6 +444,7 @@ class App extends Component {
             (;GM[1]FF[4]CA[UTF-8]AP[${this.appName}:${this.version}]
             KM[${setting.get('game.default_komi')}]
             SZ[${sizeInfo}]DT[${dateInfo}]
+            RU[${setting.get('game.default_ruleset')}]
             ${handicapInfo})
         `, {getId: helper.getId})[0]
     }
@@ -565,6 +565,8 @@ class App extends Component {
 
             this.treeHash = this.generateTreeHash()
             this.fileHash = this.generateFileHash()
+
+            this.updateRulesetScoring()
         }
 
         this.setBusy(false)
@@ -1429,6 +1431,29 @@ class App extends Component {
         })
     }
 
+    updateRulesetScoring() {
+        let root = gametree.getRoot(sabaki.state.treePosition[0])
+        let info = sabaki.getGameInfo(root)
+        let ruleset = info.ruleset
+        if (ruleset == null) ruleset = setting.get('game.default_ruleset')
+        if (ruleset == null) return
+        let method = null
+        switch (ruleset) {
+            case 'Japanese':
+                method = 'territory'
+                break
+            case 'Chinese':
+            case 'AGA':
+            case 'GOE':
+            case 'NZ':
+                method = 'area'
+                break
+        }
+        if (method) {
+            this.state.scoringMethod = method
+        }
+    }
+
     // Node Actions
 
     getGameInfo(tree) {
@@ -1444,6 +1469,34 @@ class App extends Component {
         } else {
             let s = size.toString().split(':')
             size = [+s[0], +s[s.length - 1]]
+        }
+
+        let ruleset = gametree.getRootProperty(root, 'RU')
+        if (ruleset == null) ruleset = setting.get('game.default_ruleset')
+        if (ruleset != null) {
+            switch (ruleset.toLowerCase()) {
+                case 'japanese':
+                    ruleset = 'Japanese'
+                    break
+                case 'chinese':
+                    ruleset = 'Chinese'
+                    break
+                case 'aga':
+                    ruleset = 'AGA'
+                    break
+                case 'ing':
+                case 'sst':
+                case 'goe':
+                    ruleset = 'GOE'
+                    break
+                case 'newzealand':
+                case 'new zealand':
+                case 'nz':
+                    ruleset = 'NZ'
+                    break
+            }
+        } else {
+            ruleset = null
         }
 
         let handicap = ~~gametree.getRootProperty(root, 'HA', 0)
@@ -1467,6 +1520,7 @@ class App extends Component {
             eventName: gametree.getRootProperty(root, 'EV'),
             date: gametree.getRootProperty(root, 'DT'),
             result: gametree.getRootProperty(root, 'RE'),
+            ruleset,
             komi,
             handicap,
             size
@@ -1503,6 +1557,7 @@ class App extends Component {
             eventName: 'EV',
             date: 'DT',
             result: 'RE',
+            ruleset: 'RU',
             komi: 'KM',
             handicap: 'HA'
         }
@@ -1700,7 +1755,7 @@ class App extends Component {
         let {rootTree, gameIndex} = this.inferredState
         let board = gametree.getBoard(tree, index)
         let rootNode = rootTree.nodes[0]
-        let inherit = ['BR', 'BT', 'DT', 'EV', 'GN', 'GC', 'PB', 'PW', 'RE', 'SO', 'SZ', 'WT', 'WR']
+        let inherit = ['BR', 'BT', 'DT', 'EV', 'GN', 'GC', 'PB', 'PW', 'RE', 'RU', 'SO', 'SZ', 'WT', 'WR']
 
         let clone = gametree.clone(tree)
         if (index !== 0) clone = gametree.split(clone, index - 1)[1]

@@ -22,6 +22,7 @@ class DrawerManager extends Component {
             sabaki.closeDrawer()
             sabaki.setMode('play')
             sabaki.setCurrentTreePosition(selectedTree, 0)
+            sabaki.updateRulesetScoring()
         }
 
         this.handleGameTreesChange = evt => {
@@ -40,6 +41,7 @@ class DrawerManager extends Component {
             }
 
             sabaki.setState({gameTrees: newGameTrees})
+            sabaki.updateRulesetScoring()
         }
     }
 
@@ -104,6 +106,7 @@ class DrawerManager extends Component {
                 areaMap,
                 board: scoreBoard,
                 method: scoringMethod,
+                ruleset: gametree.getRootProperty(treePosition[0], 'RU'),
                 komi: +gametree.getRootProperty(treePosition[0], 'KM', 0),
                 handicap: +gametree.getRootProperty(treePosition[0], 'HA', 0),
 

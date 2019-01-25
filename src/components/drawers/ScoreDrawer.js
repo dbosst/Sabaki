@@ -40,8 +40,8 @@ class ScoreDrawer extends Component {
     constructor() {
         super()
 
-        this.handleTerritoryButtonClick = () => setting.set('scoring.method', 'territory')
-        this.handleAreaButtonClick = () => setting.set('scoring.method', 'area')
+        this.handleTerritoryButtonClick = () => sabaki.setState({scoringMethod: 'territory'})
+        this.handleAreaButtonClick = () => sabaki.setState({scoringMethod: 'area'})
         this.handleCloseButtonClick = () => sabaki.closeDrawer()
 
         this.handleSubmitButtonClick = evt => {
@@ -57,9 +57,19 @@ class ScoreDrawer extends Component {
         return areaMap != null
     }
 
-    render({show, estimating, method, areaMap, board, komi, handicap}) {
+    render({show, estimating, method, areaMap, board, ruleset, komi, handicap}) {
         if (isNaN(komi)) komi = 0
         if (isNaN(handicap)) handicap = 0
+
+        // Change handicap compensation based on ruleset
+        switch (ruleset) {
+            case 'AGA':
+                handicap = handicap > 0 ? handicap - 1 : 0
+                break
+            case 'GOE':
+            case 'NZ':
+                handicap = 0
+        }
 
         let score = board ? board.getScore(areaMap) : {area: [], territory: [], captures: []}
         let result = method === 'area' ? score.area[0] - score.area[1] - komi - handicap

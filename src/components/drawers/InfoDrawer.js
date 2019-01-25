@@ -33,7 +33,7 @@ class InfoDrawer extends Component {
             let emptyTree = !tree.parent && tree.nodes.length === 1 && tree.subtrees.length === 0
 
             let keys = ['blackName', 'blackRank', 'whiteName', 'whiteRank',
-                'gameName', 'eventName', 'date', 'result', 'komi']
+                'gameName', 'eventName', 'date', 'result', 'ruleset', 'komi']
 
             let data = keys.reduce((acc, key) => {
                 acc[key] = Array.isArray(this.state[key])
@@ -47,6 +47,7 @@ class InfoDrawer extends Component {
             }
 
             sabaki.setGameInfo(this.props.treePosition[0], data)
+            sabaki.updateRulesetScoring()
             sabaki.closeDrawer()
             sabaki.attachEngines(...this.state.engines)
 
@@ -125,7 +126,7 @@ class InfoDrawer extends Component {
             'blackRank', 'blackName',
             'whiteRank', 'whiteName',
             'gameName', 'eventName',
-            'komi', 'result', 'handicap'
+            'ruleset', 'komi', 'result', 'handicap'
         ].reduce((acc, key) => {
             acc[key] = ({currentTarget}) => {
                 this.setState({[key]: currentTarget.value === '' ? null : currentTarget.value})
@@ -316,6 +317,7 @@ class InfoDrawer extends Component {
         eventName = null,
         date = null,
         result = null,
+        ruleset = null,
         komi = null,
         handicap = 0,
         size = [null, null]
@@ -420,6 +422,19 @@ class InfoDrawer extends Component {
                             onBlur: this.handleDateInputBlur,
                             onInput: this.handleDateInputChange
                         })
+                    ),
+                    h(InfoDrawerItem, {title: 'Ruleset'},
+                        h('select',
+                            {
+                                value: ruleset == null ? setting.get('game.default_ruleset') : ruleset,
+                                onChange: this.handleInputChange.ruleset
+                            },
+                            h('option', {value: 'Japanese'}, 'Japanese'),
+                            h('option', {value: 'Chinese'}, 'Chinese'),
+                            h('option', {value: 'AGA'}, 'AGA'),
+                            h('option', {value: 'GOE'}, 'Ing'),
+                            h('option', {value: 'NZ'}, 'New Zealand')
+                        )
                     ),
                     h(InfoDrawerItem, {title: 'Komi'},
                         h('input', {
