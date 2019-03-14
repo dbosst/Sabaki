@@ -10,6 +10,7 @@ let adjustAction,
     numMoves,
     lastActivePlayers,
     lastClock,
+    handleEventCallback,
     handleNeedsUpdate,
     handleResizeClock,
     initialTimeChanged,
@@ -223,6 +224,16 @@ exports.forceUpdate = function() {
     }
 }
 
+exports.setHandleEvent = function(handle) {
+    handleEventCallback = handle
+}
+
+let handleEvent = function(eventName, o) {
+    if (handleEventCallback != null) {
+        handleEventCallback(eventName, o)
+    }
+}
+
 exports.getProps = function() {
     let hasPeriodTime = (
         clockMode === 'byo-yomi' &&
@@ -274,8 +285,7 @@ exports.getProps = function() {
         handlePlayerClockExpired: handlePlayerClockExpired,
         handleReset: handleReset,
         handleResumed: handleResumed,
-        handleTenCount: handleTenCount,
-        handleUpdated: function() {}
+        handleTenCount: handleTenCount
     }
     return props
 }
@@ -292,94 +302,59 @@ let updateLastState = function({playerID = null, clock = null, activePlayers} = 
     lastActivePlayers = activePlayers
 }
 
-let handleAdjust = function({
-    adjustmentEventID = null,
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleAdjust = function(o) {
+    updateLastState(o)
+    handleEvent('Adjust', o)
 }
 
-let handleElapsedMainTime = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleElapsedMainTime = function(o) {
+    updateLastState(o)
+    handleEvent('ElapsedMainTime', o)
 }
 
-let handleElapsedPeriod = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleElapsedPeriod = function(o) {
+    updateLastState(o)
+    handleEvent('ElapsedPeriod', o)
 }
 
-let handleInit = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleInit = function(o) {
+    updateLastState(o)
+    handleEvent('Init', o)
     if (handleResizeClock != null) {
         handleResizeClock()
     }
     exports.reset()
 }
 
-let handleMadeMove = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleMadeMove = function(o) {
+    updateLastState(o)
+    handleEvent('MadeMove', o)
 }
 
-let handlePaused = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handlePaused = function(o) {
+    updateLastState(o)
+    handleEvent('Paused', o)
 }
 
-let handlePlayerClockExpired = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handlePlayerClockExpired = function(o) {
+    updateLastState(o)
+    handleEvent('Expired', o)
 }
 
-let handleReset = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleReset = function(o) {
+    updateLastState(o)
+    handleEvent('Reset', o)
     if (handleResizeClock != null) {
         handleResizeClock()
     }
 }
 
-let handleResumed = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
+let handleResumed = function(o) {
+    updateLastState(o)
+    handleEvent('Resumed', o)
 }
 
-let handleTenCount = function({
-    playerID = null,
-    clock = null,
-    activePlayers = null} = {}) {
-
-    updateLastState({playerID: playerID, clock: clock, activePlayers: activePlayers})
-}
-
-let handleUpdated = function(o) {
-
+let handleTenCount = function(o) {
+    updateLastState(o)
+    handleEvent('TenCount', o)
 }

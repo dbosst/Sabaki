@@ -69,7 +69,7 @@
     "@sabaki/influence": "^1.1.4",
     "@sabaki/sgf": "^3.0.0",
     "@sabaki/shudan": "^1.3.10",
-    "@dbosst/gameclock": "^1.0.2",
+    "@dbosst/gameclock": "^1.0.3",
     "argv-split": "^2.0.1",
     "classnames": "^2.2.6",
     "iconv-lite": "^0.4.24",

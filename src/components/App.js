@@ -121,6 +121,8 @@ class App extends Component {
         this.treeHash = this.generateTreeHash()
         this.attachedEngineSyncers = [null, null]
 
+        this.handleClockEvent = this.handleClockEvent.bind(this)
+
         this.historyPointer = 0
         this.history = []
         this.recordHistory()
@@ -285,6 +287,8 @@ class App extends Component {
                 }
             })
         })
+
+        clock.setHandleEvent(this.handleClockEvent)
 
         this.newFile()
     }
@@ -967,6 +971,30 @@ class App extends Component {
         }
 
         this.events.emit('vertexClick')
+    }
+
+    handleClockEvent(eventName, {
+        activePlayers = null,
+        adjustEventID = null,
+        clock = null,
+        playerID = null} = {}) {
+
+        if (eventName === 'Expired') {
+            let {gameTrees, gameIndex, treePosition} = this.state
+
+            let playerSign = (playerID === 'b' ? 1 : -1)
+            let winningPlayer = (playerID === 'b' ? 'W' : 'B')
+            let tree = gameTrees[gameIndex]
+
+            let newTree = tree.mutate(draft => {
+                draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
+            })
+
+            this.makeMainVariation(newTree, treePosition)
+            this.makeMove([-1, -1], {playerSign})
+
+            this.events.emit('expired', {playerSign})
+        }
     }
 
     makeMove(vertex, {player = null, sendToEngine = false} = {}) {
