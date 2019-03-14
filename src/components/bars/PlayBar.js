@@ -2,12 +2,19 @@ const {h, Component} = require('preact')
 const classNames = require('classnames')
 const {remote} = require('electron')
 
+const {gameclock} = require('@dbosst/gameclock')
+const clock = require('../../modules/clock')
 const helper = require('../../modules/helper')
 const setting = remote.require('./setting')
 
 class PlayBar extends Component {
     constructor() {
         super()
+
+        this.state = {
+            playerClockMargin: null,
+            playerClockSpace: null
+        }
 
         this.handleCurrentPlayerClick = () => this.props.onCurrentPlayerClick
 
@@ -51,10 +58,135 @@ class PlayBar extends Component {
             let {left, top} = this.menuButtonElement.getBoundingClientRect()
             helper.popupMenu(template, left, top)
         }
+
+        this.resizeClock = this.resizeClock.bind(this)
+        this.clockNeedsUpdate = this.clockNeedsUpdate.bind(this)
+    }
+
+    clockNeedsUpdate() {
+        this.forceUpdate()
+    }
+
+    resizeClock(evt = null) {
+        // recalculate
+        let blackEl = document.getElementById('player_1')
+        let whiteEl = document.getElementById('player_-1')
+
+        let blackContentWidth = 0
+        let whiteContentWidth = 0
+        let blackMargin = 0
+        let whiteMargin = 0
+        let spacing = 10
+        let spanWidth = 0
+        if (blackEl != null && blackEl.children != null) {
+            let farchild = blackEl.children[0]
+            spanWidth = Math.max(spanWidth, blackEl.offsetWidth)
+            blackContentWidth = (blackEl.offsetWidth - farchild.offsetLeft)
+            blackMargin = blackContentWidth + spacing
+        }
+        if (whiteEl != null && whiteEl.children != null) {
+            spanWidth = Math.max(spanWidth, whiteEl.offsetWidth)
+            let farchild = whiteEl.children[whiteEl.children.length - 1]
+            whiteContentWidth = (farchild.offsetLeft + farchild.offsetWidth)
+            whiteMargin = whiteContentWidth + spacing
+        }
+
+        let selectorMax
+        let margin
+        if (blackMargin >= whiteMargin ) {
+            selectorMax = 'playerclock_go_b'
+            margin = blackMargin
+        } else {
+            selectorMax = 'playerclock_go_w'
+            margin = whiteMargin
+        }
+        let margins = margin + 50
+
+        // calc if there is space for clock
+        let spaceForClock = true
+        let lastSpace = spanWidth - margins
+        if (lastSpace <= 0) {
+            spaceForClock = false
+        }
+        let playerClock = document.getElementById(selectorMax)
+        if (playerClock != null) {
+            let style = playerClock.currentStyle || window.getComputedStyle(playerClock)
+            let width = playerClock.offsetWidth
+            let padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+            let border = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth)
+            let playerClockWidth = width + margins - padding + border
+            lastSpace = spanWidth - playerClockWidth
+            if (lastSpace < 0) {
+                spaceForClock = false
+            }
+        }
+        if (evt != null) {
+            // from window resize
+            this.setState({
+                playerClockMargin: margin,
+                playerClockSpace: spaceForClock
+            })
+        }
+        let o = {margin: margin,
+            spaceForClock: spaceForClock}
+        return o
     }
 
     shouldComponentUpdate(nextProps) {
         return nextProps.mode !== this.props.mode || nextProps.mode === 'play'
+    }
+
+    componentDidMount() {
+        window.addEventListener('resize', (e) => this.resizeClock(e))
+        this.resizeClock()
+        clock.setResizeCallback(this.resizeClock)
+        clock.setNeedsUpdateCallback(this.clockNeedsUpdate)
+        this.forceUpdate()
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        let {margin, spaceForClock} = this.resizeClock()
+        // update style sheet if necessary
+        if (margin != null && spaceForClock != null &&
+            (spaceForClock != prevState.playerClockSpace ||
+                margin != prevState.playerClockMargin
+            )) {
+
+            let gameClockStyleSheet = helper.getStyleSheet('gameclock')
+            // until preact supports fragments
+            if (gameClockStyleSheet != null) {
+                let selectorB = '.playerclock_go_b'
+                let selectorW = '.playerclock_go_w'
+                // if no space, hide below
+                let marginTop = spaceForClock ? '0px' : '400px'
+                if (gameClockStyleSheet.cssRules.length > 0) {
+                    let firstSelector = gameClockStyleSheet.cssRules[0].selectorText
+                    if (firstSelector === selectorB ||
+                        firstSelector === selectorW) {
+
+                        gameClockStyleSheet.deleteRule(0)
+                    }
+                }
+                if (gameClockStyleSheet.cssRules.length > 0) {
+                    let firstSelector = gameClockStyleSheet.cssRules[0].selectorText
+                    if (firstSelector === selectorB ||
+                        firstSelector === selectorW) {
+
+                        gameClockStyleSheet.deleteRule(0)
+                    }
+                }
+                gameClockStyleSheet.insertRule(selectorW + ' {\n' +
+                    '    margin-left: ' + String(margin) + 'px;\n' +
+                    '    margin-top: ' + marginTop + ';\n}', 0)
+                gameClockStyleSheet.insertRule(selectorB + ' {\n' +
+                    '    margin-right: ' + String(margin) + 'px;\n' +
+                    '    margin-top: ' + marginTop + ';\n}', 0)
+            }
+            this.setState({
+                playerClockMargin: margin,
+                playerClockSpace: spaceForClock
+            })
+        }
     }
 
     render({
@@ -78,6 +210,11 @@ class PlayBar extends Component {
             playerRanks[i] = null
             isEngine[i] = true
         })
+
+        let clockProps = clock.getProps()
+
+        // hide clocks if both are infinite
+        let displayClocks = clock.shouldShowClocks() ? 'block' : 'none'
 
         return h('header',
             {
@@ -124,6 +261,10 @@ class PlayBar extends Component {
                     onClick: this.handleMenuClick
                 },
                 h('img', {src: './node_modules/octicons/build/svg/three-bars.svg', height: 21})
+            ),
+
+            h('div', {style: {'display': displayClocks}},
+                h(gameclock, clockProps)
             )
         )
     }

@@ -118,6 +118,15 @@ form p, form ul li {
     input[type="text"] {
         width: 125px;
     }
+    .timeinput {
+        width: 3ch !important;
+        margin-bottom: 7px;
+    }
+    .timelabel {
+        margin-left: 10px;
+        margin-bottom: 7px;
+        width: auto !important;
+    }
     textarea {
         resize: none;
     }

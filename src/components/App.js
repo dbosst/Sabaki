@@ -32,6 +32,7 @@ const rotation = require('../modules/rotation')
 const setting = remote.require('./setting')
 const sound = require('../modules/sound')
 const gtplogger = require('../modules/gtplogger')
+const clock = require('../modules/clock')
 
 class App extends Component {
     constructor() {
@@ -127,7 +128,7 @@ class App extends Component {
         // Expose submodules
 
         this.modules = {Board, EngineSyncer, dialog, fileformats,
-            gametree, helper, setting, sound}
+            gametree, helper, setting, sound, clock}
 
         // Bind state to settings
 
@@ -1545,6 +1546,15 @@ class App extends Component {
             blackRank: playerRanks[0],
             whiteName: playerNames[1],
             whiteRank: playerRanks[1],
+            blackMainTime: gametree.getRootProperty(tree, 'TC'),
+            blackNumPeriods: gametree.getRootProperty(tree, 'TN'),
+            blackPeriodMoves: gametree.getRootProperty(tree, 'TK'),
+            blackPeriodTime: gametree.getRootProperty(tree, 'TP'),
+            whiteEqualTime: gametree.getRootProperty(tree, 'TS'),
+            whiteMainTime: gametree.getRootProperty(tree, 'TY'),
+            whiteNumPeriods: gametree.getRootProperty(tree, 'TO'),
+            whitePeriodMoves: gametree.getRootProperty(tree, 'TL'),
+            whitePeriodTime: gametree.getRootProperty(tree, 'TQ'),
             gameName: gametree.getRootProperty(tree, 'GN'),
             eventName: gametree.getRootProperty(tree, 'EV'),
             date: gametree.getRootProperty(tree, 'DT'),
@@ -1579,6 +1589,15 @@ class App extends Component {
                 blackRank: 'BR',
                 whiteName: 'PW',
                 whiteRank: 'WR',
+                blackMainTime: 'TC',
+                blackNumPeriods: 'TN',
+                blackPeriodMoves: 'TK',
+                blackPeriodTime: 'TP',
+                whiteEqualTime: 'TS',
+                whiteMainTime: 'TY',
+                whiteNumPeriods: 'TO',
+                whitePeriodMoves: 'TL',
+                whitePeriodTime: 'TQ',
                 gameName: 'GN',
                 eventName: 'EV',
                 date: 'DT',
@@ -1591,7 +1610,9 @@ class App extends Component {
                 if (data[key] == null) continue
                 let value = data[key]
 
-                if (value && value.toString().trim() !== '') {
+                if (key === 'whiteEqualTime' && value) {
+                    draft.updateProperty(draft.root.id, props[key], ['1'])
+                } else if (value && value.toString().trim() !== '') {
                     if (key === 'komi') {
                         if (isNaN(value)) value = 0
 
