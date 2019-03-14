@@ -2556,6 +2556,7 @@ class App extends Component {
         let commandName = ['genmove_analyze', 'lz-genmove_analyze', 'genmove'].find(x => commands.includes(x))
         if (commandName == null) commandName = 'genmove'
 
+        clock.resume()
         let responseContent = await (
             commandName === 'genmove'
             ? playerSyncer.controller.sendCommand({name: commandName, args: [color]})
