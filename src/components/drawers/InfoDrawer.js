@@ -200,8 +200,6 @@ class InfoDrawer extends Component {
                 blackInitialTime.periodMoves = 0
                 blackInitialTime.periodTime = 0
             }
-            clock.setInitialTime(blackInitialTime)
-
 
             let whiteInitialTime = {}
             if (whiteHasMainTime) {
@@ -222,6 +220,9 @@ class InfoDrawer extends Component {
                 whiteInitialTime.periodMoves = 0
                 whiteInitialTime.periodTime = 0
             }
+
+            clock.setInitialTimeChanged(false)
+            clock.setInitialTime(blackInitialTime)
             clock.setInitialTime(whiteInitialTime)
 
             byoyomi ? clock.setClockModeByoYomi() :
@@ -244,8 +245,10 @@ class InfoDrawer extends Component {
             sabaki.closeDrawer()
             sabaki.attachEngines(...this.state.engines)
 
-            clock.init()
-            clock.reset()
+            if (clock.hasInitialTimeChanged()) {
+                clock.init()
+                clock.reset()
+            }
 
             await sabaki.waitForRender()
 

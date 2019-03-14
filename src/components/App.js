@@ -656,6 +656,8 @@ class App extends Component {
         this.setMode('play')
 
         await helper.wait(setting.get('app.loadgame_delay'))
+        clock.setInitialTimeNull()
+        clock.init()
 
         if (gameTrees.length != 0) {
             this.detachEngines()
@@ -747,14 +749,21 @@ class App extends Component {
         let hash = this.generateTreeHash()
 
         if (hash !== this.treeHash) {
+            clock.pauseLast()
             let answer = dialog.showMessageBox(
                 'Your changes will be lost if you close this file without saving.',
                 'warning',
                 ['Save', 'Don’t Save', 'Cancel'], 2
             )
 
-            if (answer === 0) return this.saveFile(this.state.representedFilename)
-            else if (answer === 2) return false
+            if (answer === 0) {
+                let saved = this.saveFile(this.state.representedFilename)
+                if (!saved) clock.resumeLast()
+                return saved
+            } else if (answer === 2) {
+                clock.resumeLast()
+                return false
+            }
         }
 
         return true

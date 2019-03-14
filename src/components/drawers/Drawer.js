@@ -16,11 +16,22 @@ class Drawer extends Component {
         if (nextProps.show) {
             clearTimeout(this.hidecontentId)
 
-            if (this.state.hidecontent)
-                this.setState({hidecontent: false})
+            if (this.state.hidecontent) {
+                this.setState((state) => {
+                    if (state.hidecontent) {
+                        return {hidecontent: false}
+                    }
+                })
+            }
         } else {
-            if (!this.state.hidecontent)
-                this.hidecontentId = setTimeout(() => this.setState({hidecontent: true}), 500)
+            if (!this.state.hidecontent) {
+                this.hidecontentId = setTimeout(() => this.setState(
+                    (state, props) => {
+                        if (!state.hidecontent && !props.show) {
+                            return {hidecontent: true}
+                        }
+                    }), 500)
+            }
         }
     }
 

@@ -1,3 +1,5 @@
+const helper = require('../modules/helper')
+
 let adjustAction,
     adjustEventID,
     adjustPlayerID,
@@ -10,6 +12,8 @@ let adjustAction,
     lastClock,
     handleNeedsUpdate,
     handleResizeClock,
+    initialTimeChanged,
+    lastMode,
     showClocks
 
 exports.shouldShowClocks = function() {
@@ -19,9 +23,7 @@ exports.shouldShowClocks = function() {
 let setShowClocks = function(show) {
     if (show !== showClocks) {
         showClocks = show
-        if (handleNeedsUpdate != null) {
-            handleNeedsUpdate()
-        }
+        exports.forceUpdate()
     }
 }
 
@@ -93,9 +95,7 @@ exports.init = function() {
     mode = 'init'
     lastClock = null
     checkTwoClocks()
-    if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
-    }
+    exports.forceUpdate()
 }
 
 exports.makeMove = function() {
@@ -105,16 +105,17 @@ exports.makeMove = function() {
     if (numMoves != null) {
         numMoves++
     }
-    if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
-    }
+    exports.forceUpdate()
 }
 
 exports.pause = function() {
     mode = 'pause'
-    if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
-    }
+    exports.forceUpdate()
+}
+
+exports.pauseLast = function() {
+    lastMode = mode
+    exports.pause()
 }
 
 exports.resume = function() {
@@ -122,8 +123,13 @@ exports.resume = function() {
         checkTwoClocks()
     }
     mode = 'resume'
-    if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
+    exports.forceUpdate()
+}
+
+exports.resumeLast = function() {
+    if (lastMode === 'resume') {
+        lastMode = mode
+        exports.resume()
     }
 }
 
@@ -132,9 +138,7 @@ exports.reset = function() {
     mode = 'reset'
     lastClock = null
     checkTwoClocks()
-    if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
-    }
+    exports.forceUpdate()
 }
 
 exports.setClockModeAbsolute = function() {
@@ -172,7 +176,7 @@ exports.setInitialTime = function(o = {}) {
     if (mainTime > 0 ||
         (numPeriods >= 1 && periodMoves >= 1 && periodTime > 0)) {
 
-        initialTime[playerIndex] = {
+        let initTime = {
             mainTime: mainTime,
             mainMoves: mainMoves,
             numPeriods: numPeriods,
@@ -181,7 +185,28 @@ exports.setInitialTime = function(o = {}) {
             playerID: playerID,
             playerText: playerText
         }
+        if (!helper.shallowEquals(initTime, initialTime[playerIndex])) {
+            initialTime[playerIndex] = initTime
+            exports.setInitialTimeChanged(true)
+        }
     }
+}
+
+exports.setInitialTimeNull = function() {
+    if (initialTime != null) {
+        initialTime[0] = null
+        initialTime[1] = null
+    }
+    initialTime = null
+    exports.setInitialTimeChanged(true)
+}
+
+exports.hasInitialTimeChanged = function() {
+    return initialTimeChanged
+}
+
+exports.setInitialTimeChanged = function(val) {
+    initialTimeChanged = val
 }
 
 exports.setNeedsUpdateCallback = function(handleUpdate) {
@@ -190,6 +215,12 @@ exports.setNeedsUpdateCallback = function(handleUpdate) {
 
 exports.setResizeCallback = function(handleResize) {
     handleResizeClock = handleResize
+}
+
+exports.forceUpdate = function() {
+    if (handleNeedsUpdate != null) {
+        handleNeedsUpdate()
+    }
 }
 
 exports.getProps = function() {
