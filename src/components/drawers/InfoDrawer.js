@@ -142,6 +142,14 @@ class InfoDrawer extends Component {
             let blackHasInfiniteTime = true
             let whiteHasInfiniteTime = true
 
+            // make sure white time equal if equalTime
+            whiteInfiniteTime = blackInfiniteTime
+            whiteOvertime = blackOvertime
+            whiteMainTime = blackMainTime
+            whiteNumPeriods = blackNumPeriods
+            whitePeriodMoves = blackPeriodMoves
+            whitePeriodTime = blackPeriodTime
+
             if (blackInfiniteTime != null && !blackInfiniteTime) {
                 if (whiteEqualTime) {
                     keys = keys.concat(['whiteEqualTime'])

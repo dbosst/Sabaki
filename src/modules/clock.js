@@ -21,6 +21,10 @@ exports.shouldShowClocks = function() {
     return showClocks
 }
 
+exports.getMode = function() {
+    return mode
+}
+
 let setShowClocks = function(show) {
     if (show !== showClocks) {
         showClocks = show
@@ -234,62 +238,6 @@ let handleEvent = function(eventName, o) {
     }
 }
 
-exports.getProps = function() {
-    let hasPeriodTime = (
-        clockMode === 'byo-yomi' &&
-        initialTime != null &&
-        initialTime.length == 2 && (
-            (initialTime[0].periodTime > 0) ||
-            (initialTime[1].periodTime > 0)
-        ))
-    let hasMultiplePeriods = (
-        hasPeriodTime && (
-            (initialTime[0].numPeriods > 1 && initialTime[0].periodTime > 0) ||
-            (initialTime[1].numPeriods > 1 && initialTime[1].periodTime > 0)
-        ))
-    let hasMultiplePeriodMoves = (
-        hasPeriodTime && (
-            (initialTime[0].periodMoves > 1 && initialTime[0].periodTime > 0) ||
-            (initialTime[1].periodMoves > 1 && initialTime[1].periodTime > 0)
-        )
-    )
-
-    const props = {
-        adjustEventID: adjustEventID,
-        clockMode: clockMode,
-        dispInfoNumPeriods: hasMultiplePeriods,
-        dispInfoPeriodMoves: hasMultiplePeriodMoves,
-        dispInfoPlayerText: false,
-        dispCountElapsedMainTime: false,
-        dispCountElapsedNumPeriods: false,
-        dispCountElapsedPeriodMoves: false,
-        dispCountElapsedPeriodTime: false,
-        dispFormatMainTimeFSNumDigits: 0,
-        dispFormatMainTimeFSLastNumSecs: 0,
-        dispFormatMainTimeFSUpdateInterval: 1,
-        dispFormatPeriodTimeFSNumDigits: 1,
-        dispFormatPeriodTimeFSLastNumSecs: 10,
-        dispFormatPeriodTimeFSUpdateInterval: 0.1,
-        dispOnExpired: null,
-        gameClockID: 'go',
-        initialTime: initialTime,
-        minActiveClocks: 2,
-        mode: mode,
-        numMoves: numMoves,
-        handleAdjust: handleAdjust,
-        handleElapsedMainTime: handleElapsedMainTime,
-        handleElapsedPeriod: handleElapsedPeriod,
-        handleInit: handleInit,
-        handleMadeMove: handleMadeMove,
-        handlePaused: handlePaused,
-        handlePlayerClockExpired: handlePlayerClockExpired,
-        handleReset: handleReset,
-        handleResumed: handleResumed,
-        handleTenCount: handleTenCount
-    }
-    return props
-}
-
 exports.getLastActivePlayers = function() {
     return lastActivePlayers
 }
@@ -361,4 +309,60 @@ let handleResumed = function(o) {
 let handleTenCount = function(o) {
     updateLastState(o)
     handleEvent('TenCount', o)
+}
+
+exports.getProps = function() {
+    let hasPeriodTime = (
+        clockMode === 'byo-yomi' &&
+        initialTime != null &&
+        initialTime.length == 2 && (
+            (initialTime[0].periodTime > 0) ||
+            (initialTime[1].periodTime > 0)
+        ))
+    let hasMultiplePeriods = (
+        hasPeriodTime && (
+            (initialTime[0].numPeriods > 1 && initialTime[0].periodTime > 0) ||
+            (initialTime[1].numPeriods > 1 && initialTime[1].periodTime > 0)
+        ))
+    let hasMultiplePeriodMoves = (
+        hasPeriodTime && (
+            (initialTime[0].periodMoves > 1 && initialTime[0].periodTime > 0) ||
+            (initialTime[1].periodMoves > 1 && initialTime[1].periodTime > 0)
+        )
+    )
+
+    const props = {
+        adjustEventID: adjustEventID,
+        clockMode: clockMode,
+        dispInfoNumPeriods: hasMultiplePeriods,
+        dispInfoPeriodMoves: hasMultiplePeriodMoves,
+        dispInfoPlayerText: false,
+        dispCountElapsedMainTime: false,
+        dispCountElapsedNumPeriods: false,
+        dispCountElapsedPeriodMoves: false,
+        dispCountElapsedPeriodTime: false,
+        dispFormatMainTimeFSNumDigits: 0,
+        dispFormatMainTimeFSLastNumSecs: 0,
+        dispFormatMainTimeFSUpdateInterval: 1,
+        dispFormatPeriodTimeFSNumDigits: 1,
+        dispFormatPeriodTimeFSLastNumSecs: 10,
+        dispFormatPeriodTimeFSUpdateInterval: 0.1,
+        dispOnExpired: null,
+        gameClockID: 'go',
+        initialTime: initialTime,
+        minActiveClocks: 2,
+        mode: mode,
+        numMoves: numMoves,
+        handleAdjust: handleAdjust,
+        handleElapsedMainTime: handleElapsedMainTime,
+        handleElapsedPeriod: handleElapsedPeriod,
+        handleInit: handleInit,
+        handleMadeMove: handleMadeMove,
+        handlePaused: handlePaused,
+        handlePlayerClockExpired: handlePlayerClockExpired,
+        handleReset: handleReset,
+        handleResumed: handleResumed,
+        handleTenCount: handleTenCount
+    }
+    return props
 }

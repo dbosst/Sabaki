@@ -108,6 +108,15 @@ let data = [
             },
             {type: 'separator'},
             {
+                label: 'Pa&use/Resume Clock',
+                click: () => sabaki.toggleClockPaused()
+            },
+            {
+                label: 'Reset Cloc&k',
+                click: () => sabaki.resetClock()
+            },
+            {type: 'separator'},
+            {
                 label: '&Estimate',
                 click: () => sabaki.setMode('estimator')
             },

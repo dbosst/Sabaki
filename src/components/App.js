@@ -471,6 +471,20 @@ class App extends Component {
         this.setState({consoleLog: []})
     }
 
+    resetClock() {
+        clock.pause()
+        clock.reset()
+    }
+
+    toggleClockPaused() {
+        let mode = clock.getMode()
+        if (mode === 'resume') {
+            clock.pause()
+        } else if (mode != null) {
+            clock.resume()
+        }
+    }
+
     // History Management
 
     recordHistory({prevGameIndex, prevTreePosition} = {}) {
@@ -1588,6 +1602,9 @@ class App extends Component {
 
         let playerRanks = ['BR', 'WR'].map(x => gametree.getRootProperty(tree, x))
 
+        let whiteEqualTime = gametree.getRootProperty(tree, 'TS')
+        whiteEqualTime = (whiteEqualTime != null) ? true : null
+
         return {
             playerNames,
             playerRanks,
@@ -1599,7 +1616,7 @@ class App extends Component {
             blackNumPeriods: gametree.getRootProperty(tree, 'TN'),
             blackPeriodMoves: gametree.getRootProperty(tree, 'TK'),
             blackPeriodTime: gametree.getRootProperty(tree, 'TP'),
-            whiteEqualTime: gametree.getRootProperty(tree, 'TS'),
+            whiteEqualTime: whiteEqualTime,
             whiteMainTime: gametree.getRootProperty(tree, 'TY'),
             whiteNumPeriods: gametree.getRootProperty(tree, 'TO'),
             whitePeriodMoves: gametree.getRootProperty(tree, 'TL'),
