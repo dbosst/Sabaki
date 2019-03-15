@@ -1,5 +1,6 @@
 const {h, Component} = require('preact')
 const gametree = require('../modules/gametree')
+const clock = require('../modules/clock')
 
 const InfoDrawer = require('./drawers/InfoDrawer')
 const ScoreDrawer = require('./drawers/ScoreDrawer')
@@ -13,9 +14,18 @@ class DrawerManager extends Component {
         super()
 
         this.handleScoreSubmit = ({resultString}) => {
-            this.props.rootTree.nodes[0].RE = [resultString]
+            let {gameTrees, gameIndex, treePosition} = this.props
+            let tree = gameTrees[gameIndex]
+            let newTree = tree.mutate(draft => {
+                draft.updateProperty(draft.root.id, 'RE', [resultString])
+            })
             sabaki.closeDrawer()
-            setTimeout(() => sabaki.setMode('play'), 500)
+            // Second of two consecutive pauseLast()
+            clock.pauseLast()
+            setTimeout(() => {
+                sabaki.setMode('play')
+                sabaki.setCurrentTreePosition(newTree, treePosition)
+            }, 500)
         }
 
         this.handleGameSelect = ({selectedTree}) => {

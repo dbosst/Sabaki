@@ -352,6 +352,14 @@ class App extends Component {
         if (prevState.zoomFactor !== this.state.zoomFactor) {
             this.window.webContents.setZoomFactor(this.state.zoomFactor)
         }
+
+        if (prevState.mode !== this.state.mode) {
+            if (this.state.mode === 'scoring') {
+                clock.pauseLast()
+            } else if (prevState.mode === 'scoring') {
+                clock.resumeLast()
+            }
+        }
     }
 
     updateSettingState(key = null) {
@@ -986,6 +994,8 @@ class App extends Component {
             let winningPlayer = (playerID === 'b' ? 'W' : 'B')
             let tree = gameTrees[gameIndex]
 
+            clock.pause()
+
             let newTree = tree.mutate(draft => {
                 draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
             })
@@ -1119,6 +1129,8 @@ class App extends Component {
         if (player == null) player = currentPlayer
         let color = player > 0 ? 'W' : 'B'
         let tree = gameTrees[gameIndex]
+
+        clock.pause()
 
         let newTree = tree.mutate(draft => {
             draft.updateProperty(draft.root.id, 'RE', [`${color}+Resign`])
@@ -1701,6 +1713,18 @@ class App extends Component {
             }
         })
 
+        let activePlayers = clock.getLastActivePlayers()
+        if (activePlayers != null && activePlayers.length > 0) {
+            let playerID = activePlayers[0]
+            if (playerID != null) {
+                let playerSign = [sign > 0 ? 'b' : 'w']
+                if (playerID !== playerSign) {
+                    clock.pauseLast()
+                    clock.makeMove()
+                    clock.resumeLast()
+                }
+            }
+        }
         this.setCurrentTreePosition(newTree, treePosition)
     }
 

@@ -290,6 +290,10 @@ exports.getProps = function() {
     return props
 }
 
+exports.getLastActivePlayers = function() {
+    return lastActivePlayers
+}
+
 let updateLastState = function({playerID = null, clock = null, activePlayers} = {}) {
     if (lastClock == null || lastClock.length !== 2) {
         lastClock = [null, null]
