@@ -995,11 +995,12 @@ class App extends Component {
         this.events.emit('vertexClick')
     }
 
-    handleClockEvent(eventName, {
-        activePlayers = null,
-        adjustEventID = null,
-        clock = null,
-        playerID = null} = {}) {
+    handleClockEvent(eventName, o = {}) {
+        let {
+            activePlayers = null,
+            adjustEventID = null,
+            clock: clk = null,
+            playerID = null} = o
 
         if (eventName === 'Expired') {
             let {gameTrees, gameIndex, treePosition} = this.state
@@ -1015,9 +1016,9 @@ class App extends Component {
             })
 
             this.makeMainVariation(newTree, treePosition)
-            this.makeMove([-1, -1], {playerSign})
+            this.makeMove([-1, -1], {player: playerSign})
 
-            this.events.emit('expired', {playerSign})
+            this.events.emit('expired', {player: playerSign})
         }
     }
 
@@ -1098,6 +1099,41 @@ class App extends Component {
         let createNode = tree.get(nextTreePosition) == null
 
         this.setCurrentTreePosition(newTree, nextTreePosition)
+        clock.makeMove()
+
+        let playerClock = clock.getLastPlayerClockOnMove(player)
+        if (playerClock != null) {
+            let {
+                elapsedTotalTime: totalTime,
+                elapsedMoveTime: moveTime,
+                elapsedMainTime: mainTime,
+                elapsedNumPeriods: numPeriods,
+                elapsedPeriodMoves: periodMoves,
+                elapsedPeriodTime: periodTime
+            } = playerClock
+
+            let digits = 4
+            totalTime = helper.truncatePreciseToNumber(totalTime, digits)
+            moveTime = helper.truncatePreciseToNumber(moveTime, digits)
+            mainTime = helper.truncatePreciseToNumber(mainTime, digits)
+            numPeriods = helper.truncatePreciseToNumber(numPeriods, digits)
+            periodMoves = helper.truncatePreciseToNumber(periodMoves, digits)
+            periodTime = helper.truncatePreciseToNumber(periodTime, digits)
+
+            // Update elapsed timing info for move
+            newTree = newTree.mutate(draft => {
+                let timeProps = player > 0 ?
+                    ['BA', 'BE', 'BI', 'BN', 'BK', 'BP'] :
+                    ['WA', 'WE', 'WI', 'WN', 'WK', 'WP']
+                draft.updateProperty(nextTreePosition, timeProps[0], [totalTime])
+                draft.updateProperty(nextTreePosition, timeProps[1], [moveTime])
+                draft.updateProperty(nextTreePosition, timeProps[2], [mainTime])
+                draft.updateProperty(nextTreePosition, timeProps[3], [numPeriods])
+                draft.updateProperty(nextTreePosition, timeProps[4], [periodMoves])
+                draft.updateProperty(nextTreePosition, timeProps[5], [periodTime])
+            })
+            this.setCurrentTreePosition(newTree, nextTreePosition)
+        }
 
         // Play sounds
 

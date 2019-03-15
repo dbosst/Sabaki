@@ -10,6 +10,7 @@ let adjustAction,
     numMoves,
     lastActivePlayers,
     lastClock,
+    lastClockOnMove,
     handleEventCallback,
     handleNeedsUpdate,
     handleResizeClock,
@@ -99,6 +100,7 @@ exports.init = function() {
     numMoves = 0
     mode = 'init'
     lastClock = null
+    lastClockOnMove = null
     checkTwoClocks()
     exports.forceUpdate()
 }
@@ -142,6 +144,7 @@ exports.reset = function() {
     numMoves = 0
     mode = 'reset'
     lastClock = null
+    lastClockOnMove = null
     checkTwoClocks()
     exports.forceUpdate()
 }
@@ -238,6 +241,32 @@ let handleEvent = function(eventName, o) {
     }
 }
 
+exports.getLastPlayerClock = function(sign = null) {
+    let playerIndex = (sign != null && sign > 0) ? 0 :
+        (sign != null && sign < 0) ? 1
+        : null
+    if (playerIndex != null && lastClock != null &&
+        lastClock.length == 2 && lastClock[playerIndex] != null) {
+
+        return lastClock[playerIndex]
+    } else {
+        return null
+    }
+}
+
+exports.getLastPlayerClockOnMove = function(sign = null) {
+    let playerIndex = (sign != null && sign > 0) ? 0 :
+        (sign != null && sign < 0) ? 1
+        : null
+    if (playerIndex != null && lastClockOnMove != null &&
+        lastClockOnMove.length == 2 && lastClockOnMove[playerIndex] != null) {
+
+        return lastClockOnMove[playerIndex]
+    } else {
+        return null
+    }
+}
+
 exports.getLastActivePlayers = function() {
     return lastActivePlayers
 }
@@ -252,6 +281,17 @@ let updateLastState = function({playerID = null, clock = null, activePlayers} = 
         lastClock[1] = clock
     }
     lastActivePlayers = activePlayers
+}
+
+let updateLastClockOnMove = function({playerID = null, clock = null, activePlayers} = {}) {
+    if (lastClockOnMove == null || lastClockOnMove.length !== 2) {
+        lastClockOnMove = [null, null]
+    }
+    if (playerID === 'b') {
+        lastClockOnMove[0] = clock
+    } else if (playerID === 'w') {
+        lastClockOnMove[1] = clock
+    }
 }
 
 let handleAdjust = function(o) {
@@ -280,6 +320,7 @@ let handleInit = function(o) {
 
 let handleMadeMove = function(o) {
     updateLastState(o)
+    updateLastClockOnMove(o)
     handleEvent('MadeMove', o)
 }
 
@@ -290,6 +331,7 @@ let handlePaused = function(o) {
 
 let handlePlayerClockExpired = function(o) {
     updateLastState(o)
+    updateLastClockOnMove(o)
     handleEvent('Expired', o)
 }
 

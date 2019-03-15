@@ -123,6 +123,22 @@ exports.isWritableDirectory = function(path) {
     }
 }
 
+exports.truncatePreciseToNumber = function(num, digits = 0) {
+    let f = Number.parseFloat(num)
+    if (Number.isNaN(f) || !Number.isFinite(f)) return null
+    let s = String(f)
+    let dot = s.indexOf('.')
+    if (dot === -1) {
+        return Number.parseFloat(s)
+    }
+    if (!Number.isFinite(digits) || digits < 0) digits = 0
+    let len = s.length
+    let prec = len - dot - 1
+    let newlen = digits === 0 ? len - prec - 1 : len - prec + digits
+    return Number.parseFloat(s.slice(0,
+        Math.max(1, Math.min(len, newlen))))
+}
+
 exports.getStyleSheet = function(title) {
     if (document == null || document.styleSheets == null) {
         return null
