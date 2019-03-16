@@ -1573,7 +1573,7 @@ class App extends Component {
             let lostOnTime = false
             if (result != null) {
                 result = result.toString().toUpperCase().trim()
-                if (result.length >= 3 && result.slice(0, 3) == 'B+T') {
+                if (result.length >= 3 && result.slice(0, 3) == 'W+T') {
                     lostOnTime = true
                 }
             }
