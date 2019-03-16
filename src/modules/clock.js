@@ -91,13 +91,13 @@ let checkTwoClocks = function() {
     let periodMoves = 0
 
     initialTime[playerIndex] = {
-        mainTime: mainTime,
-        mainMoves: mainMoves,
-        numPeriods: numPeriods,
-        periodMoves: periodMoves,
-        periodTime: periodTime,
-        playerID: playerID,
-        playerText: playerText
+        mainTime,
+        mainMoves,
+        numPeriods,
+        periodMoves,
+        periodTime,
+        playerID,
+        playerText
     }
 }
 
@@ -231,13 +231,13 @@ exports.setInitialTime = function(o = {}) {
         (numPeriods >= 1 && periodMoves >= 1 && periodTime > 0)) {
 
         let initTime = {
-            mainTime: mainTime,
-            mainMoves: mainMoves,
-            numPeriods: numPeriods,
-            periodMoves: periodMoves,
-            periodTime: periodTime,
-            playerID: playerID,
-            playerText: playerText
+            mainTime,
+            mainMoves,
+            numPeriods,
+            periodMoves,
+            periodTime,
+            playerID,
+            playerText
         }
         if (!helper.shallowEquals(initTime, initialTime[playerIndex])) {
             initialTime[playerIndex] = initTime
@@ -353,6 +353,20 @@ exports.getLastActivePlayers = function() {
     return lastActivePlayers
 }
 
+exports.isLastPlayerClockExpired = function(sign = null) {
+    let playerIndex = (sign != null && sign > 0) ? 0 :
+        (sign != null && sign < 0) ? 1
+        : null
+    if (playerIndex != null && lastClock != null &&
+        lastClock.length == 2 && lastClock[playerIndex] != null &&
+        lastClock[playerIndex].state != null) {
+
+        return (lastClock[playerIndex].state === 'expired')
+    } else {
+        return null
+    }
+}
+
 let updateLastState = function({playerID = null, clock = null, activePlayers} = {}) {
     if (lastClock == null || lastClock.length !== 2) {
         lastClock = [null, null]
@@ -456,11 +470,11 @@ exports.getProps = function() {
     )
 
     const props = {
-        adjustAction: adjustAction,
-        adjustEventID: adjustEventID,
-        adjustPlayerID: adjustPlayerID,
-        adjustVal: adjustVal,
-        clockMode: clockMode,
+        adjustAction,
+        adjustEventID,
+        adjustPlayerID,
+        adjustVal,
+        clockMode,
         dispInfoNumPeriods: hasMultiplePeriods,
         dispInfoPeriodMoves: hasMultiplePeriodMoves,
         dispInfoPlayerText: false,
@@ -476,20 +490,20 @@ exports.getProps = function() {
         dispFormatPeriodTimeFSUpdateInterval: 0.1,
         dispOnExpired: null,
         gameClockID: 'go',
-        initialTime: initialTime,
+        initialTime,
         minActiveClocks: 2,
-        mode: mode,
-        numMoves: numMoves,
-        handleAdjust: handleAdjust,
-        handleElapsedMainTime: handleElapsedMainTime,
-        handleElapsedPeriod: handleElapsedPeriod,
-        handleInit: handleInit,
-        handleMadeMove: handleMadeMove,
-        handlePaused: handlePaused,
-        handlePlayerClockExpired: handlePlayerClockExpired,
-        handleReset: handleReset,
-        handleResumed: handleResumed,
-        handleTenCount: handleTenCount
+        mode,
+        numMoves,
+        handleAdjust,
+        handleElapsedMainTime,
+        handleElapsedPeriod,
+        handleInit,
+        handleMadeMove,
+        handlePaused,
+        handlePlayerClockExpired,
+        handleReset,
+        handleResumed,
+        handleTenCount
     }
     return props
 }

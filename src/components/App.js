@@ -1117,8 +1117,8 @@ class App extends Component {
             let newTree = tree.mutate(draft => {
                 draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
             })
+            this.setCurrentTreePosition(newTree, treePosition)
 
-            this.makeMainVariation(newTree, treePosition)
             this.makeMove([-1, -1], {player: playerSign})
 
             this.events.emit('expired', {player: playerSign})
@@ -1222,8 +1222,9 @@ class App extends Component {
             (!hasFiniteInitMainTime &&
                 !hasPeriodInit && clockMode === 'byo-yomi')
 
+        let clockState = playerClock.state
         if (!hasInfiniteTime && playerClock != null
-            && playerClock.state === 'paused') {
+            && (clockState === 'paused' || clockState === 'expired')) {
 
             let {
                 elapsedTotalTime: totalTime,
@@ -1507,16 +1508,25 @@ class App extends Component {
         let blackTime
         let whiteTime
         let item = parentList.next()
-        while((blackTime == null || whiteTime == null) &&
+        let foundMove = false
+        // search upwards until we get blackTime, whiteTime, and find a move
+        while((blackTime == null || whiteTime == null || !foundMove) &&
             item != null && !item.done) {
 
             let n = item.value
             if (n != null && n.data != null) {
                 let data = n.data
 
+                if (!foundMove) {
+                    if (data['B'] != null || data['W'] != null) {
+                        foundMove = true
+                    }
+                }
+
                 if (blackTime == null) {
                     let {
                         BA: blackTotalTime = undefined,
+                        BE: blackMoveTime = undefined,
                         BI: blackMainTime = undefined,
                         BN: blackNumPeriods = undefined,
                         BK: blackPeriodMoves = undefined,
@@ -1529,6 +1539,7 @@ class App extends Component {
 
                         blackTime = {
                             elapsedMainTime: blackMainTime,
+                            elapsedMoveTime: blackMoveTime,
                             elapsedNumPeriods: blackNumPeriods,
                             elapsedPeriodMoves: blackPeriodMoves,
                             elapsedPeriodTime: blackPeriodTime,
@@ -1540,6 +1551,7 @@ class App extends Component {
                 if (whiteTime == null) {
                     let {
                         WA: whiteTotalTime = undefined,
+                        WE: whiteMoveTime = undefined,
                         WI: whiteMainTime = undefined,
                         WN: whiteNumPeriods = undefined,
                         WK: whitePeriodMoves = undefined,
@@ -1551,6 +1563,7 @@ class App extends Component {
                         whitePeriodTime != null)) {
 
                         whiteTime = {
+                            elapsedMoveTime: whiteMoveTime,
                             elapsedMainTime: whiteMainTime,
                             elapsedNumPeriods: whiteNumPeriods,
                             elapsedPeriodMoves: whitePeriodMoves,
@@ -1578,22 +1591,24 @@ class App extends Component {
                 }
             }
             if (clockMode === 'absolutePerPlayer') {
-                if (lostOnTime) {
+                if (lostOnTime && foundMove) {
                     let {mainTime} = clock.getPlayerInitialTime(sign)
                     if (mainTime != null) {
                         blackTime = {
                             elapsedMainTime: mainTime,
+                            elapsedMoveTime: 0,
                             elapsedTotalTime: mainTime
                         }
                     }
                 } else {
                     blackTime = {
                         elapsedMainTime: 0,
+                        elapsedMoveTime: 0,
                         elapsedTotalTime: 0
                     }
                 }
             } else {
-                if (lostOnTime) {
+                if (lostOnTime && foundMove) {
                     let {
                         mainTime,
                         numPeriods,
@@ -1605,7 +1620,9 @@ class App extends Component {
                             elapsedMainTime: mainTime,
                             elapsedNumPeriods: numPeriods,
                             elapsedPeriodMoves: periodMoves,
-                            elapsedPeriodTime: periodTime
+                            elapsedPeriodTime: periodTime,
+                            elapsedMoveTime: 0,
+                            elapsedTotalTime: 0
                         }
                     }
                 } else {
@@ -1614,6 +1631,7 @@ class App extends Component {
                         elapsedNumPeriods: 0,
                         elapsedPeriodMoves: 0,
                         elapsedPeriodTime: 0,
+                        elapsedMoveTime: 0,
                         elapsedTotalTime: 0
                     }
                 }
@@ -1632,22 +1650,24 @@ class App extends Component {
                 }
             }
             if (clockMode === 'absolutePerPlayer') {
-                if (lostOnTime) {
+                if (lostOnTime && foundMove) {
                     let {mainTime} = clock.getPlayerInitialTime(sign)
                     if (mainTime != null) {
                         whiteTime = {
                             elapsedMainTime: mainTime,
+                            elapsedMoveTime: 0,
                             elapsedTotalTime: mainTime
                         }
                     }
                 } else {
                     whiteTime = {
                         elapsedMainTime: 0,
+                        elapsedMoveTime: 0,
                         elapsedTotalTime: 0
                     }
                 }
             } else {
-                if (lostOnTime) {
+                if (lostOnTime && foundMove) {
                     let {
                         mainTime,
                         numPeriods,
@@ -1659,7 +1679,9 @@ class App extends Component {
                             elapsedMainTime: mainTime,
                             elapsedNumPeriods: numPeriods,
                             elapsedPeriodMoves: periodMoves,
-                            elapsedPeriodTime: periodTime
+                            elapsedPeriodTime: periodTime,
+                            elapsedMoveTime: 0,
+                            elapsedTotalTime: 0
                         }
                     }
                 } else {
@@ -1668,6 +1690,7 @@ class App extends Component {
                         elapsedNumPeriods: 0,
                         elapsedPeriodMoves: 0,
                         elapsedPeriodTime: 0,
+                        elapsedMoveTime: 0,
                         elapsedTotalTime: 0
                     }
                 }
@@ -1717,18 +1740,22 @@ class App extends Component {
         if (!madeMove) {
             // navigating the game tree
             // pause the clock and switch the clock's current player
-            let resumeAfter = (clock.getMode() === 'resume')
-            if (resumeAfter) clock.pauseLast()
             let sign = this.getPlayer(tree, newTreePosition)
-            // switch to the current player
-            clock.changeToPlayer(sign, {resumeAfter: false})
+            let expiredBefore = clock.isLastPlayerClockExpired(sign)
+            let resumeAfter = (clock.getMode() === 'resume')
+            if (resumeAfter && !expiredBefore) clock.pauseLast()
             // adjust clock to match the time at that game position (clock replay)
             this.adjustClockToTreePosition({
                 tree: tree,
                 treePosition: newTreePosition,
                 currents: currents
             })
-            if (resumeAfter) clock.resumeLast()
+            // switch to the current player
+            // change after adjusting time, since activePlayers may change
+            clock.changeToPlayer(sign, {resumeAfter: false})
+            // check if playerClock expired
+            let expiredAfter = clock.isLastPlayerClockExpired(sign)
+            if (resumeAfter && !expiredBefore && !expiredAfter) clock.resumeLast()
         }
 
         this.setState({
@@ -1963,8 +1990,36 @@ class App extends Component {
 
         let playerRanks = ['BR', 'WR'].map(x => gametree.getRootProperty(tree, x))
 
-        let whiteEqualTime = gametree.getRootProperty(tree, 'TS')
+
+        let blackMainTime = Number.parseFloat(gametree.getRootProperty(tree, 'TC'))
+        let blackNumPeriods = Number.parseFloat(gametree.getRootProperty(tree, 'TN'))
+        let blackPeriodMoves = Number.parseFloat(gametree.getRootProperty(tree, 'TK'))
+        let blackPeriodTime = Number.parseFloat(gametree.getRootProperty(tree, 'TP'))
+        let whiteEqualTime = Number.parseFloat(gametree.getRootProperty(tree, 'TS'))
+        let whiteMainTime = Number.parseFloat(gametree.getRootProperty(tree, 'TY'))
+        let whiteNumPeriods = Number.parseFloat(gametree.getRootProperty(tree, 'TO'))
+        let whitePeriodMoves = Number.parseFloat(gametree.getRootProperty(tree, 'TL'))
+        let whitePeriodTime = Number.parseFloat(gametree.getRootProperty(tree, 'TQ'))
+
+        blackMainTime = (Number.isFinite(blackMainTime) &&
+            blackMainTime >= 0) ? blackMainTime : null
+        blackNumPeriods = (Number.isFinite(blackNumPeriods) &&
+            blackNumPeriods >= 1) ? blackNumPeriods : null
+        blackPeriodMoves = (Number.isFinite(blackPeriodMoves) &&
+            blackPeriodMoves >= 1) ? blackPeriodMoves : null
+        blackPeriodTime = (Number.isFinite(blackPeriodTime) &&
+            blackPeriodTime > 0) ? blackPeriodTime : null
+
         whiteEqualTime = (whiteEqualTime != null) ? true : null
+
+        whiteMainTime = (Number.isFinite(whiteMainTime) &&
+            whiteMainTime >= 0) ? whiteMainTime : null
+        whiteNumPeriods = (Number.isFinite(whiteNumPeriods) &&
+            whiteNumPeriods >= 1) ? whiteNumPeriods : null
+        whitePeriodMoves = (Number.isFinite(whitePeriodMoves) &&
+            whitePeriodMoves >= 1) ? whitePeriodMoves : null
+        whitePeriodTime = (Number.isFinite(whitePeriodTime) &&
+            whitePeriodTime > 0) ? whitePeriodTime : null
 
         return {
             playerNames,
@@ -1973,15 +2028,15 @@ class App extends Component {
             blackRank: playerRanks[0],
             whiteName: playerNames[1],
             whiteRank: playerRanks[1],
-            blackMainTime: gametree.getRootProperty(tree, 'TC'),
-            blackNumPeriods: gametree.getRootProperty(tree, 'TN'),
-            blackPeriodMoves: gametree.getRootProperty(tree, 'TK'),
-            blackPeriodTime: gametree.getRootProperty(tree, 'TP'),
-            whiteEqualTime: whiteEqualTime,
-            whiteMainTime: gametree.getRootProperty(tree, 'TY'),
-            whiteNumPeriods: gametree.getRootProperty(tree, 'TO'),
-            whitePeriodMoves: gametree.getRootProperty(tree, 'TL'),
-            whitePeriodTime: gametree.getRootProperty(tree, 'TQ'),
+            blackMainTime,
+            blackNumPeriods,
+            blackPeriodMoves,
+            blackPeriodTime,
+            whiteEqualTime,
+            whiteMainTime,
+            whiteNumPeriods,
+            whitePeriodMoves,
+            whitePeriodTime,
             gameName: gametree.getRootProperty(tree, 'GN'),
             eventName: gametree.getRootProperty(tree, 'EV'),
             date: gametree.getRootProperty(tree, 'DT'),
