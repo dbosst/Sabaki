@@ -22,8 +22,24 @@ exports.shouldShowClocks = function() {
     return showClocks
 }
 
+exports.getPlayerInitialTime = function(sign) {
+    if (sign == null || initialTime == null || initialTime.length !== 2) {
+        return null
+    }
+
+    let playerIndex = sign > 0 ? 0 : (sign < 0 ? 1 : null)
+    if (playerIndex == null) return null
+
+    if (initialTime[playerIndex] == null) return null
+    return initialTime[playerIndex]
+}
+
 exports.getMode = function() {
     return mode
+}
+
+exports.getClockMode = function() {
+    return clockMode
 }
 
 let setShowClocks = function(show) {
@@ -96,11 +112,35 @@ exports.equalMainTime = function() {
     return (initialTime[0],mainTime === initialTime[1],mainTime)
 }
 
+exports.adjustPlayerClock = function(sign = null, action = null, val = null) {
+    // validate first before setting clock state
+    if (sign == null || action == null || val == null) return
+
+    let playerID = sign > 0 ? 'b' : (sign < 0 ? 'w' : null)
+    if (playerID == null) return
+
+    if (adjustEventID == null) {
+        adjustEventID = 0
+    } else {
+        adjustEventID++
+    }
+    adjustAction = action
+    adjustPlayerID = playerID
+    adjustVal = val
+    exports.forceUpdate()
+}
+
 exports.init = function() {
     numMoves = 0
     mode = 'init'
     lastClock = null
     lastClockOnMove = null
+
+    adjustAction = null
+    adjustEventID = null
+    adjustPlayerID = null
+    adjustVal = null
+
     checkTwoClocks()
     exports.forceUpdate()
 }
@@ -145,6 +185,12 @@ exports.reset = function() {
     mode = 'reset'
     lastClock = null
     lastClockOnMove = null
+
+    adjustAction = null
+    adjustEventID = null
+    adjustPlayerID = null
+    adjustVal = null
+
     checkTwoClocks()
     exports.forceUpdate()
 }
@@ -198,6 +244,42 @@ exports.setInitialTime = function(o = {}) {
             exports.setInitialTimeChanged(true)
         }
     }
+}
+
+exports.changeToPlayer = function(sign = null, {resumeAfter = false} = {}) {
+    if (sign != null && lastActivePlayers != null &&
+        lastActivePlayers.length > 0) {
+
+        let nextPlayerID = sign > 0 ? 'b' : (sign < 0 ? 'w' : null)
+        if (nextPlayerID != null) {
+            let playerID = lastActivePlayers[0]
+            if (playerID != null) {
+                if (playerID !== nextPlayerID) {
+                    if (resumeAfter) exports.pauseLast()
+                    exports.makeMove()
+                    if (resumeAfter) exports.resumeLast()
+                }
+            }
+        }
+    }
+}
+
+exports.setPlayerClockTime = function({sign = null, elapsedTime = null} = {}) {
+    if (sign == null || elapsedTime == null) return
+
+    let {
+        elapsedMainTime: mainTime,
+        elapsedNumPeriods: numPeriods,
+        elapsedPeriodMoves: periodMoves,
+        elapsedPeriodTime: periodTime,
+        elapsedTotalTime: totalTime
+    } = elapsedTime
+
+    exports.adjustPlayerClock(sign, 'setElapsedMainTime', mainTime)
+    exports.adjustPlayerClock(sign, 'setElapsedNumPeriods', numPeriods)
+    exports.adjustPlayerClock(sign, 'setElapsedPeriodMoves', periodMoves)
+    exports.adjustPlayerClock(sign, 'setElapsedPeriodTime', periodTime)
+    exports.adjustPlayerClock(sign, 'setElapsedTotalTime', totalTime)
 }
 
 exports.setInitialTimeNull = function() {
@@ -374,7 +456,10 @@ exports.getProps = function() {
     )
 
     const props = {
+        adjustAction: adjustAction,
         adjustEventID: adjustEventID,
+        adjustPlayerID: adjustPlayerID,
+        adjustVal: adjustVal,
         clockMode: clockMode,
         dispInfoNumPeriods: hasMultiplePeriods,
         dispInfoPeriodMoves: hasMultiplePeriodMoves,

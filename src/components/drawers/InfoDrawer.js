@@ -143,12 +143,14 @@ class InfoDrawer extends Component {
             let whiteHasInfiniteTime = true
 
             // make sure white time equal if equalTime
-            whiteInfiniteTime = blackInfiniteTime
-            whiteOvertime = blackOvertime
-            whiteMainTime = blackMainTime
-            whiteNumPeriods = blackNumPeriods
-            whitePeriodMoves = blackPeriodMoves
-            whitePeriodTime = blackPeriodTime
+            if (whiteEqualTime) {
+                whiteInfiniteTime = blackInfiniteTime
+                whiteOvertime = blackOvertime
+                whiteMainTime = blackMainTime
+                whiteNumPeriods = blackNumPeriods
+                whitePeriodMoves = blackPeriodMoves
+                whitePeriodTime = blackPeriodTime
+            }
 
             if (blackInfiniteTime != null && !blackInfiniteTime) {
                 if (whiteEqualTime) {
@@ -229,12 +231,12 @@ class InfoDrawer extends Component {
                 whiteInitialTime.periodTime = 0
             }
 
+            byoyomi ? clock.setClockModeByoYomi() :
+                clock.setClockModeAbsolute()
             clock.setInitialTimeChanged(false)
             clock.setInitialTime(blackInitialTime)
             clock.setInitialTime(whiteInitialTime)
 
-            byoyomi ? clock.setClockModeByoYomi() :
-                clock.setClockModeAbsolute()
 
             let useClocks = (!blackInfiniteTime || !whiteInfiniteTime)
 

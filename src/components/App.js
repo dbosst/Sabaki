@@ -697,6 +697,7 @@ class App extends Component {
             })
 
             let [firstTree, ] = gameTrees
+            this.loadClockSetupFromTree(firstTree)
             this.setCurrentTreePosition(firstTree, firstTree.root.id, {clearCache: true})
 
             this.treeHash = this.generateTreeHash()
@@ -712,6 +713,108 @@ class App extends Component {
         if (gameTrees.length > 1) {
             await helper.wait(setting.get('gamechooser.show_delay'))
             this.openDrawer('gamechooser')
+        }
+    }
+
+    loadClockSetupFromTree(tree) {
+        if (tree == null || tree.root == null || tree.root.id == null) return
+
+        let {
+            blackMainTime,
+            blackNumPeriods,
+            blackPeriodMoves,
+            blackPeriodTime,
+            whiteEqualTime,
+            whiteMainTime,
+            whiteNumPeriods,
+            whitePeriodMoves,
+            whitePeriodTime
+        } = this.getGameInfo(tree)
+
+        let byoyomi = false
+        let blackHasMainTime = false
+        let whiteHasMainTime = false
+        let blackHasPeriodTime = false
+        let whiteHasPeriodTime = false
+        let blackHasInfiniteTime = true
+        let whiteHasInfiniteTime = true
+
+        if (blackMainTime != null) {
+            blackHasMainTime = true
+        }
+        if (blackNumPeriods != null && blackNumPeriods >= 1 &&
+            blackPeriodTime != null && blackPeriodTime > 0 &&
+            blackPeriodMoves != null && blackPeriodMoves >= 1) {
+
+            blackHasPeriodTime = true
+        }
+        let blackInitialTime = {}
+        if (blackHasMainTime) {
+            blackInitialTime.mainTime = blackMainTime
+            blackHasInfiniteTime = false
+        }
+        if (blackHasPeriodTime) {
+            blackInitialTime.numPeriods = blackNumPeriods
+            blackInitialTime.periodMoves = blackPeriodMoves
+            blackInitialTime.periodTime = blackPeriodTime
+            byoyomi = true
+            blackHasInfiniteTime = false
+        }
+        blackInitialTime.sign = 1
+        if (blackHasInfiniteTime) {
+            blackInitialTime.mainTime = Infinity
+            blackInitialTime.numPeriods = 0
+            blackInitialTime.periodMoves = 0
+            blackInitialTime.periodTime = 0
+        }
+
+        // make sure white time equal if equalTime
+        if (whiteEqualTime) {
+            whiteMainTime = blackMainTime
+            whiteNumPeriods = blackNumPeriods
+            whitePeriodMoves = blackPeriodMoves
+            whitePeriodTime = blackPeriodTime
+        }
+
+        if (whiteMainTime != null) {
+            whiteHasMainTime = true
+        }
+        if (whiteNumPeriods != null && whiteNumPeriods >= 1 &&
+            whitePeriodTime != null && whitePeriodTime > 0 &&
+            whitePeriodMoves != null && whitePeriodMoves >= 1) {
+
+            whiteHasPeriodTime = true
+        }
+        let whiteInitialTime = {}
+        if (whiteHasMainTime) {
+            whiteInitialTime.mainTime = whiteMainTime
+            whiteHasInfiniteTime = false
+        }
+        if (whiteHasPeriodTime) {
+            whiteInitialTime.numPeriods = whiteNumPeriods
+            whiteInitialTime.periodMoves = whitePeriodMoves
+            whiteInitialTime.periodTime = whitePeriodTime
+            byoyomi = true
+            whiteHasInfiniteTime = false
+        }
+        whiteInitialTime.sign = -1
+        if (whiteHasInfiniteTime) {
+            whiteInitialTime.mainTime = Infinity
+            whiteInitialTime.numPeriods = 0
+            whiteInitialTime.periodMoves = 0
+            whiteInitialTime.periodTime = 0
+        }
+
+        byoyomi ? clock.setClockModeByoYomi() :
+            clock.setClockModeAbsolute()
+
+        clock.setInitialTimeChanged(false)
+        clock.setInitialTime(blackInitialTime)
+        clock.setInitialTime(whiteInitialTime)
+
+        if (clock.hasInitialTimeChanged()) {
+            clock.init()
+            clock.reset()
         }
     }
 
@@ -1098,7 +1201,7 @@ class App extends Component {
 
         let createNode = tree.get(nextTreePosition) == null
 
-        this.setCurrentTreePosition(newTree, nextTreePosition)
+        this.setCurrentTreePosition(newTree, nextTreePosition, {madeMove: true})
         clock.makeMove()
 
         let playerClock = clock.getLastPlayerClockOnMove(player)
@@ -1132,7 +1235,7 @@ class App extends Component {
                 draft.updateProperty(nextTreePosition, timeProps[4], [periodMoves])
                 draft.updateProperty(nextTreePosition, timeProps[5], [periodTime])
             })
-            this.setCurrentTreePosition(newTree, nextTreePosition)
+            this.setCurrentTreePosition(newTree, nextTreePosition, {madeMove: true})
         }
 
         // Play sounds
@@ -1373,7 +1476,186 @@ class App extends Component {
 
     // Navigation
 
-    setCurrentTreePosition(tree, id, {clearCache = false} = {}) {
+    adjustClockToTreePosition({tree, treePosition, currents = null} = {}) {
+        if (tree == null) return
+        let parentList = tree.listNodesVertically(treePosition, -1, currents)
+        if (parentList == null) return
+
+        let blackTime
+        let whiteTime
+        let item = parentList.next()
+        while((blackTime == null || whiteTime == null) &&
+            item != null && !item.done) {
+
+            let n = item.value
+            if (n != null && n.data != null) {
+                let data = n.data
+
+                if (blackTime == null) {
+                    let {
+                        BA: blackTotalTime = undefined,
+                        BI: blackMainTime = undefined,
+                        BN: blackNumPeriods = undefined,
+                        BK: blackPeriodMoves = undefined,
+                        BP: blackPeriodTime = undefined
+                    } = data
+
+                    if (blackMainTime != null || (
+                        blackNumPeriods != null && blackPeriodMoves != null &&
+                        blackPeriodTime != null)) {
+
+                        blackTime = {
+                            elapsedMainTime: blackMainTime,
+                            elapsedNumPeriods: blackNumPeriods,
+                            elapsedPeriodMoves: blackPeriodMoves,
+                            elapsedPeriodTime: blackPeriodTime,
+                            elapsedTotalTime: blackTotalTime
+                        }
+                    }
+                }
+
+                if (whiteTime == null) {
+                    let {
+                        WA: whiteTotalTime = undefined,
+                        WI: whiteMainTime = undefined,
+                        WN: whiteNumPeriods = undefined,
+                        WK: whitePeriodMoves = undefined,
+                        WP: whitePeriodTime = undefined
+                    } = data
+
+                    if (whiteMainTime != null || (
+                        whiteNumPeriods != null && whitePeriodMoves != null &&
+                        whitePeriodTime != null)) {
+
+                        whiteTime = {
+                            elapsedMainTime: whiteMainTime,
+                            elapsedNumPeriods: whiteNumPeriods,
+                            elapsedPeriodMoves: whitePeriodMoves,
+                            elapsedPeriodTime: whitePeriodTime,
+                            elapsedTotalTime: whiteTotalTime
+                        }
+                    }
+                }
+            }
+
+            item = parentList.next()
+        }
+
+        let clockMode
+        let result
+        if (blackTime == null) {
+            let sign = 1
+            clockMode = clock.getClockMode()
+            result = tree.root.data['RE']
+            let lostOnTime = false
+            if (result != null) {
+                result = result.toString().toUpperCase().trim()
+                if (result.length >= 3 && result.slice(0, 3) == 'B+T') {
+                    lostOnTime = true
+                }
+            }
+            if (clockMode === 'absolutePerPlayer') {
+                if (lostOnTime) {
+                    let {mainTime} = clock.getPlayerInitialTime(sign)
+                    if (mainTime != null) {
+                        blackTime = {
+                            elapsedMainTime: mainTime,
+                            elapsedTotalTime: mainTime
+                        }
+                    }
+                } else {
+                    blackTime = {
+                        elapsedMainTime: 0,
+                        elapsedTotalTime: 0
+                    }
+                }
+            } else {
+                if (lostOnTime) {
+                    let {
+                        mainTime,
+                        numPeriods,
+                        periodMoves,
+                        periodTime
+                    } = clock.getPlayerInitialTime(sign)
+                    if (mainTime != null) {
+                        blackTime = {
+                            elapsedMainTime: mainTime,
+                            elapsedNumPeriods: numPeriods,
+                            elapsedPeriodMoves: periodMoves,
+                            elapsedPeriodTime: periodTime
+                        }
+                    }
+                } else {
+                    blackTime = {
+                        elapsedMainTime: 0,
+                        elapsedNumPeriods: 0,
+                        elapsedPeriodMoves: 0,
+                        elapsedPeriodTime: 0,
+                        elapsedTotalTime: 0
+                    }
+                }
+            }
+        }
+
+        if (whiteTime == null) {
+            let sign = -1
+            clockMode = clock.getClockMode()
+            result = tree.root.data['RE']
+            let lostOnTime = false
+            if (result != null) {
+                result = result.toString().toUpperCase().trim()
+                if (result.length >= 3 && result.slice(0, 3) == 'B+T') {
+                    lostOnTime = true
+                }
+            }
+            if (clockMode === 'absolutePerPlayer') {
+                if (lostOnTime) {
+                    let {mainTime} = clock.getPlayerInitialTime(sign)
+                    if (mainTime != null) {
+                        whiteTime = {
+                            elapsedMainTime: mainTime,
+                            elapsedTotalTime: mainTime
+                        }
+                    }
+                } else {
+                    whiteTime = {
+                        elapsedMainTime: 0,
+                        elapsedTotalTime: 0
+                    }
+                }
+            } else {
+                if (lostOnTime) {
+                    let {
+                        mainTime,
+                        numPeriods,
+                        periodMoves,
+                        periodTime
+                    } = clock.getPlayerInitialTime(sign)
+                    if (mainTime != null) {
+                        whiteTime = {
+                            elapsedMainTime: mainTime,
+                            elapsedNumPeriods: numPeriods,
+                            elapsedPeriodMoves: periodMoves,
+                            elapsedPeriodTime: periodTime
+                        }
+                    }
+                } else {
+                    whiteTime = {
+                        elapsedMainTime: 0,
+                        elapsedNumPeriods: 0,
+                        elapsedPeriodMoves: 0,
+                        elapsedPeriodTime: 0,
+                        elapsedTotalTime: 0
+                    }
+                }
+            }
+        }
+
+        clock.setPlayerClockTime({sign: 1, elapsedTime: blackTime})
+        clock.setPlayerClockTime({sign: -1, elapsedTime: whiteTime})
+    }
+
+    setCurrentTreePosition(tree, id, {clearCache = false, madeMove = false} = {}) {
         if (clearCache) gametree.clearBoardCache()
 
         if (['scoring', 'estimator'].includes(this.state.mode)) {
@@ -1406,13 +1688,33 @@ class App extends Component {
         let prevGameIndex = this.state.gameIndex
         let prevTreePosition = this.state.treePosition
 
+        let newGameTrees = gameTrees.map((t, i) => i !== gameIndex ? t : tree)
+        let newTreePosition = id
+
+        if (!madeMove) {
+            // navigating the game tree
+            // pause the clock and switch the clock's current player
+            let resumeAfter = (clock.getMode() === 'resume')
+            if (resumeAfter) clock.pauseLast()
+            let sign = this.getPlayer(tree, newTreePosition)
+            // switch to the current player
+            clock.changeToPlayer(sign, {resumeAfter: false})
+            // adjust clock to match the time at that game position (clock replay)
+            this.adjustClockToTreePosition({
+                tree: tree,
+                treePosition: newTreePosition,
+                currents: currents
+            })
+            if (resumeAfter) clock.resumeLast()
+        }
+
         this.setState({
             playVariation: null,
             blockedGuesses: [],
             highlightVertices: [],
-            gameTrees: gameTrees.map((t, i) => i !== gameIndex ? t : tree),
+            gameTrees: newGameTrees,
             gameIndex,
-            treePosition: id
+            treePosition: newTreePosition
         })
 
         this.recordHistory({prevGameIndex, prevTreePosition})
@@ -1766,18 +2068,7 @@ class App extends Component {
             }
         })
 
-        let activePlayers = clock.getLastActivePlayers()
-        if (activePlayers != null && activePlayers.length > 0) {
-            let playerID = activePlayers[0]
-            if (playerID != null) {
-                let playerSign = [sign > 0 ? 'b' : 'w']
-                if (playerID !== playerSign) {
-                    clock.pauseLast()
-                    clock.makeMove()
-                    clock.resumeLast()
-                }
-            }
-        }
+        clock.changeToPlayer(sign, {resumeAfter: true})
         this.setCurrentTreePosition(newTree, treePosition)
     }
 
