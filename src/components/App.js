@@ -1205,7 +1205,26 @@ class App extends Component {
         clock.makeMove()
 
         let playerClock = clock.getLastPlayerClockOnMove(player)
-        if (playerClock != null) {
+        let playerInitialTime = clock.getPlayerInitialTime(player)
+        let clockMode = clock.getClockMode()
+
+        let hasInitTime = playerInitialTime != null
+        let hasFiniteInitMainTime = hasInitTime &&
+            playerInitialTime.mainTime != null &&
+            playerInitialTime.mainTime > 0 &&
+            Number.isFinite(playerInitialTime.mainTime)
+        let hasPeriodInit = hasInitTime &&
+            playerInitialTime.numPeriods >= 1 &&
+            playerInitialTime.periodMoves >= 1 &&
+            playerInitialTime.periodTime > 0
+        let hasInfiniteTime = !hasInitTime ||
+            (!hasFiniteInitMainTime && clockMode === 'absolutePerPlayer') ||
+            (!hasFiniteInitMainTime &&
+                !hasPeriodInit && clockMode === 'byo-yomi')
+
+        if (!hasInfiniteTime && playerClock != null
+            && playerClock.state === 'paused') {
+
             let {
                 elapsedTotalTime: totalTime,
                 elapsedMoveTime: moveTime,
@@ -1224,16 +1243,20 @@ class App extends Component {
             periodTime = helper.truncatePreciseToNumber(periodTime, digits)
 
             // Update elapsed timing info for move
+            let blackProps = ['BA', 'BE', 'BI', 'BN', 'BK', 'BP']
+            let whiteProps = ['WA', 'WE', 'WI', 'WN', 'WK', 'WP']
             newTree = newTree.mutate(draft => {
-                let timeProps = player > 0 ?
-                    ['BA', 'BE', 'BI', 'BN', 'BK', 'BP'] :
-                    ['WA', 'WE', 'WI', 'WN', 'WK', 'WP']
+                let timeProps = player > 0 ? blackProps : whiteProps
                 draft.updateProperty(nextTreePosition, timeProps[0], [totalTime])
                 draft.updateProperty(nextTreePosition, timeProps[1], [moveTime])
-                draft.updateProperty(nextTreePosition, timeProps[2], [mainTime])
-                draft.updateProperty(nextTreePosition, timeProps[3], [numPeriods])
-                draft.updateProperty(nextTreePosition, timeProps[4], [periodMoves])
-                draft.updateProperty(nextTreePosition, timeProps[5], [periodTime])
+                if (hasFiniteInitMainTime) {
+                    draft.updateProperty(nextTreePosition, timeProps[2], [mainTime])
+                }
+                if (clockMode === 'byo-yomi') {
+                    draft.updateProperty(nextTreePosition, timeProps[3], [numPeriods])
+                    draft.updateProperty(nextTreePosition, timeProps[4], [periodMoves])
+                    draft.updateProperty(nextTreePosition, timeProps[5], [periodTime])
+                }
             })
             this.setCurrentTreePosition(newTree, nextTreePosition, {madeMove: true})
         }
