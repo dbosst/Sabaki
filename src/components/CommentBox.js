@@ -113,6 +113,49 @@ class CommentTitle extends Component {
         ]
     }
 
+    getCurrentMoveTiming() {
+        let {gameTree, treePosition} = this.props
+        let node = gameTree.get(treePosition)
+
+        // Determine root node
+        if (node.parentId == null) return null
+
+        // Get current player
+        let sign
+        if (node.data.B != null) {
+            sign = 1
+        } else if (node.data.W != null) {
+            sign = -1
+        } else {
+            return null
+        }
+
+        // Determine if there is move timing info
+        // Both are float but we want it in seconds
+        let totalTime = Number.parseInt(
+            sign === 1 ? node.data.BA : node.data.WA)
+        let moveTime = Number.parseInt(
+            sign === 1 ? node.data.BE : node.data.WE)
+        let totalTimeStr = null
+        let moveTimeStr = null
+        if (Number.isFinite(totalTime)) {
+            let formattedTotalTime = helper.formatSecondsToUnits(totalTime, 2)
+            totalTimeStr = `Total time: ${formattedTotalTime}`
+        }
+        if (Number.isFinite(moveTime)) {
+            let formattedMoveTime = helper.formatSecondsToUnits(moveTime, 2)
+            moveTimeStr = `Move time: ${formattedMoveTime}`
+        }
+
+        if (!totalTimeStr && !moveTimeStr) return null
+
+        return [
+            h('br'),
+            (moveTimeStr ? h('span', {}, moveTimeStr, h('br')) : null),
+            (totalTimeStr ? h('span', {}, totalTimeStr, h('br')) : null),
+        ]
+    }
+
     render({
         moveAnnotation: [ma, mv],
         positionAnnotation: [pa, pv],
@@ -184,7 +227,8 @@ class CommentTitle extends Component {
                 title !== '' ? helper.typographer(title)
                 : showMoveInterpretation ? this.getCurrentMoveInterpretation()
                 : ''
-            )
+            ),
+            this.getCurrentMoveTiming()
         )
     }
 }

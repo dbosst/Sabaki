@@ -272,6 +272,7 @@ exports.setPlayerClockTime = function({sign = null, elapsedTime = null} = {}) {
         elapsedNumPeriods: numPeriods,
         elapsedPeriodMoves: periodMoves,
         elapsedPeriodTime: periodTime,
+        elapsedMoveTime: moveTime,
         elapsedTotalTime: totalTime
     } = elapsedTime
 
@@ -279,6 +280,7 @@ exports.setPlayerClockTime = function({sign = null, elapsedTime = null} = {}) {
     exports.adjustPlayerClock(sign, 'setElapsedNumPeriods', numPeriods)
     exports.adjustPlayerClock(sign, 'setElapsedPeriodMoves', periodMoves)
     exports.adjustPlayerClock(sign, 'setElapsedPeriodTime', periodTime)
+    exports.adjustPlayerClock(sign, 'setElapsedMoveTime', moveTime)
     exports.adjustPlayerClock(sign, 'setElapsedTotalTime', totalTime)
 }
 

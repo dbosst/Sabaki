@@ -139,6 +139,35 @@ exports.truncatePreciseToNumber = function(num, digits = 0) {
         Math.max(1, Math.min(len, newlen))))
 }
 
+exports.formatSecondsToUnits = function(sec, maxNumUnits = 1) {
+    let str
+    if (sec < 60) {
+        str = String(sec) + ' sec.'
+    } else if (sec < 3600) {
+        let unitMinutes = Math.floor(sec / 60)
+        let unitSeconds = sec - (unitMinutes * 60)
+        str = String(unitSeconds) + ' min.'
+        let unitsLeft = maxNumUnits - 1
+        if (unitSeconds !== 0 && unitsLeft > 0) {
+            str += ' ' + String(unitSeconds) + ' sec.'
+        }
+    } else {
+        let unitHours = Math.floor(sec / 3600)
+        let unitMinutes = Math.floor((sec - (unitHours * 3600)) / 60)
+        let unitSeconds = sec - (unitHours * 3600) - (unitMinutes - 60)
+        str = String(unitSeconds) + ' hr.'
+        let unitsLeft = maxNumUnits - 1
+        if (unitMinutes !== 0 && unitsLeft > 0) {
+            str += ' ' + String(unitMinutes) + ' min.'
+            unitsLeft--
+        }
+        if (unitSeconds !== 0 && unitsLeft > 0) {
+            str += ' ' + String(unitSeconds) + ' sec.'
+        }
+    }
+    return str
+}
+
 exports.getStyleSheet = function(title) {
     if (document == null || document.styleSheets == null) {
         return null
