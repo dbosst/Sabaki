@@ -22,7 +22,23 @@ exports.shouldShowClocks = function() {
     return showClocks
 }
 
+exports.shouldShowClocksAsync = async function() {
+    return showClocks
+}
+
 exports.getPlayerInitialTime = function(sign) {
+    if (sign == null || initialTime == null || initialTime.length !== 2) {
+        return null
+    }
+
+    let playerIndex = sign > 0 ? 0 : (sign < 0 ? 1 : null)
+    if (playerIndex == null) return null
+
+    if (initialTime[playerIndex] == null) return null
+    return initialTime[playerIndex]
+}
+
+exports.getPlayerInitialTimeAsync = async function(sign) {
     if (sign == null || initialTime == null || initialTime.length !== 2) {
         return null
     }
@@ -38,18 +54,22 @@ exports.getMode = function() {
     return mode
 }
 
+exports.getModeAsync = async function() {
+    return mode
+}
+
 exports.getClockMode = function() {
     return clockMode
 }
 
-let setShowClocks = function(show) {
+let setShowClocks = async function(show) {
     if (show !== showClocks) {
         showClocks = show
         exports.forceUpdate()
     }
 }
 
-let checkTwoClocks = function() {
+let checkTwoClocks = async function() {
     // check how many clocks set; if only one set, set the other to Infinity
     if (initialTime == null || initialTime.length !== 2) {
         setShowClocks(false)
@@ -89,7 +109,6 @@ let checkTwoClocks = function() {
     let periodTime = 0
     let numPeriods = 0
     let periodMoves = 0
-
     initialTime[playerIndex] = {
         mainTime,
         mainMoves,
@@ -155,17 +174,17 @@ exports.makeMove = function() {
     exports.forceUpdate()
 }
 
-exports.pause = function() {
+exports.pause = async function() {
     mode = 'pause'
     exports.forceUpdate()
 }
 
-exports.pauseLast = function() {
+exports.pauseLast = async function() {
     lastMode = mode
     exports.pause()
 }
 
-exports.resume = function() {
+exports.resume = async function() {
     if (mode == null || mode === 'init' || mode === 'reset') {
         checkTwoClocks()
     }
@@ -173,7 +192,7 @@ exports.resume = function() {
     exports.forceUpdate()
 }
 
-exports.resumeLast = function() {
+exports.resumeLast = async function() {
     if (lastMode === 'resume') {
         lastMode = mode
         exports.resume()
@@ -309,7 +328,7 @@ exports.setResizeCallback = function(handleResize) {
     handleResizeClock = handleResize
 }
 
-exports.forceUpdate = function() {
+exports.forceUpdate = async function() {
     if (handleNeedsUpdate != null) {
         handleNeedsUpdate()
     }

@@ -63,7 +63,7 @@ class PlayBar extends Component {
         this.clockNeedsUpdate = this.clockNeedsUpdate.bind(this)
     }
 
-    clockNeedsUpdate() {
+    async clockNeedsUpdate() {
         this.forceUpdate()
     }
 
@@ -141,7 +141,7 @@ class PlayBar extends Component {
         this.resizeClock()
         clock.setResizeCallback(this.resizeClock)
         clock.setNeedsUpdateCallback(this.clockNeedsUpdate)
-        this.forceUpdate()
+        this.clockNeedsUpdate()
     }
 
     componentDidUpdate(prevProps, prevState) {

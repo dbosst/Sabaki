@@ -253,12 +253,11 @@ class InfoDrawer extends Component {
 
             sabaki.setGameInfo(this.props.gameTree, data)
             sabaki.closeDrawer()
-            sabaki.attachEngines(...this.state.engines)
-
+            // setup the clock before the engines so we can set the engines clock
             if (clock.hasInitialTimeChanged()) {
-                clock.init()
-                clock.reset()
+                sabaki.resetClock()
             }
+            sabaki.attachEngines(...this.state.engines)
 
             await sabaki.waitForRender()
 
@@ -266,7 +265,6 @@ class InfoDrawer extends Component {
             let startGame = setting.get('gtp.start_game_after_attach')
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
-                if (useClocks) { clock.resume() }
                 sabaki.generateMove({followUp: true})
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {

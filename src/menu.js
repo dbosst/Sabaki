@@ -6,6 +6,7 @@ const setting = remote && remote.require('./setting')
 const sabaki = typeof window !== 'undefined' && window.sabaki
 const dialog = sabaki && require('./modules/dialog')
 const gametree = sabaki && require('./modules/gametree')
+const clock = sabaki && require('./modules/clock')
 
 let toggleSetting = key => setting.set(key, !setting.get(key))
 let selectTool = tool => (sabaki.setMode('edit'), sabaki.setState({selectedTool: tool}))
@@ -417,7 +418,11 @@ let data = [
             {
                 label: 'Start &Playing',
                 accelerator: 'F5',
-                click: () => sabaki.generateMove({analyze: sabaki.state.analysis != null, followUp: true})
+                click: () => {
+                    sabaki.setState({generatingMoves: true})
+                    clock.resume()
+                    sabaki.generateMove({analyze: sabaki.state.analysis != null, followUp: true})
+                }
             },
             {
                 label: 'Generate &Move',
