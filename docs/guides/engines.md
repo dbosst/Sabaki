@@ -4,9 +4,9 @@ You can add Go engines to Sabaki to play offline against an AI opponent. Sabaki 
 
 Most of the Go engines support optional parameters to tune their capacities. List of this parameters can be found in engine documentation. 
 
-* [**Leela Zero**](http://zero.sjeng.org/): Download the latest appropriate version for you system (binary and source code available). Then get a network hash file, likely the [best network](http://zero.sjeng.org/best-network) is the one you want. It's currently the only engine that supports analysis.
+* [**Leela Zero**](http://zero.sjeng.org/): Download the latest appropriate version for you system (binary and source code available). Then get a network hash file, likely the [best network](http://zero.sjeng.org/best-network) is the one you want. It's currently the only engine that supports analysis. Change the lag buffer higher (the engine responds a few seconds early) if your engine loses on time when using the clock (the buffer time unit is in seconds*100).
 
-  Arguments: `--gtp -w path/to/weightsfile` 
+  Arguments: `--lagbuffer 300 --gtp -w path/to/weightsfile`
 
 * [**GNU Go**](http://www.gnu.org/software/gnugo): There are binaries available for Windows. On Linux and macOS you can compile the engine from source. There are also [binaries for OS X 10.4.3 and above (universal binary) here](http://www.sente.ch/pub/software/goban/gnugo-3.7.11.dmg). 
 
