@@ -156,7 +156,7 @@ exports.formatSecondsToUnits = function(sec, maxNumUnits = 1) {
     } else if (sec < 3600) {
         let unitMinutes = Math.floor(sec / 60)
         let unitSeconds = sec - (unitMinutes * 60)
-        str = String(unitSeconds) + ' min.'
+        str = String(unitMinutes) + ' min.'
         let unitsLeft = maxNumUnits - 1
         if (unitSeconds !== 0 && unitsLeft > 0) {
             str += ' ' + String(unitSeconds) + ' sec.'
@@ -165,7 +165,7 @@ exports.formatSecondsToUnits = function(sec, maxNumUnits = 1) {
         let unitHours = Math.floor(sec / 3600)
         let unitMinutes = Math.floor((sec - (unitHours * 3600)) / 60)
         let unitSeconds = sec - (unitHours * 3600) - (unitMinutes - 60)
-        str = String(unitSeconds) + ' hr.'
+        str = String(unitHours) + ' hr.'
         let unitsLeft = maxNumUnits - 1
         if (unitMinutes !== 0 && unitsLeft > 0) {
             str += ' ' + String(unitMinutes) + ' min.'
