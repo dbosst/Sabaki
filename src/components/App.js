@@ -91,8 +91,6 @@ class App extends Component {
 
             engines: null,
             attachedEngines: [null, null],
-            clockForEngines: [false, false],
-            engineClockNeedsSync: false,
             engineCommands: [[], []],
             generatingMoves: false,
             analysisTreePosition: null,
@@ -122,6 +120,8 @@ class App extends Component {
 
         this.treeHash = this.generateTreeHash()
         this.attachedEngineSyncers = [null, null]
+        this.clockForEngines = [false, false]
+        this.engineClockNeedsSync = false
 
         this.handleClockEvent = this.handleClockEvent.bind(this)
 
@@ -1132,6 +1132,70 @@ class App extends Component {
         }
     }
 
+    updateMoveTiming(sign, tree, treePosition) {
+        let playerClock = clock.getLastPlayerClockOnMove(sign)
+        let initTime = clock.getPlayerInitialTime(sign)
+        let clockMode = clock.getClockMode()
+
+        let hasInitTime = initTime != null
+        let hasFiniteInitMainTime = hasInitTime &&
+            initTime.mainTime != null &&
+            initTime.mainTime > 0 &&
+            Number.isFinite(initTime.mainTime)
+        let hasPeriodInit = hasInitTime &&
+            initTime.numPeriods >= 1 &&
+            initTime.periodMoves >= 1 &&
+            initTime.periodTime > 0
+        let hasInfiniteTime = !hasInitTime ||
+            (!hasFiniteInitMainTime && clockMode === 'absolutePerPlayer') ||
+            (!hasFiniteInitMainTime &&
+                !hasPeriodInit && clockMode === 'byo-yomi')
+
+        let clockState = playerClock ? playerClock.state : null
+
+        if (hasInfiniteTime || playerClock == null ||
+            !(clockState === 'paused' || clockState === 'expired')) {
+
+            return null
+        }
+
+        let {
+            elapsedTotalTime: totalTime,
+            elapsedMoveTime: moveTime,
+            elapsedMainTime: mainTime,
+            elapsedNumPeriods: numPeriods,
+            elapsedPeriodMoves: periodMoves,
+            elapsedPeriodTime: periodTime
+        } = playerClock
+
+        let digits = 2
+        totalTime = helper.truncatePreciseToNumber(totalTime, digits)
+        moveTime = helper.truncatePreciseToNumber(moveTime, digits)
+        mainTime = helper.truncatePreciseToNumber(mainTime, digits)
+        numPeriods = helper.truncatePreciseToNumber(numPeriods, digits)
+        periodMoves = helper.truncatePreciseToNumber(periodMoves, digits)
+        periodTime = helper.truncatePreciseToNumber(periodTime, digits)
+
+        // Update elapsed timing info for move
+        let blackProps = ['BA', 'BE', 'BI', 'BN', 'BK', 'BP']
+        let whiteProps = ['WA', 'WE', 'WI', 'WN', 'WK', 'WP']
+        let newTree = tree.mutate(draft => {
+            let timeProps = sign > 0 ? blackProps : whiteProps
+            draft.updateProperty(treePosition, timeProps[0], [totalTime])
+            draft.updateProperty(treePosition, timeProps[1], [moveTime])
+            if (hasFiniteInitMainTime) {
+                draft.updateProperty(treePosition, timeProps[2], [mainTime])
+            }
+            if (clockMode === 'byo-yomi') {
+                draft.updateProperty(treePosition, timeProps[3], [numPeriods])
+                draft.updateProperty(treePosition, timeProps[4], [periodMoves])
+                draft.updateProperty(treePosition, timeProps[5], [periodTime])
+            }
+        })
+
+        return {newTree, treePosition}
+    }
+
     makeMove(vertex, {player = null, sendToEngine = false, expired = false} = {}) {
         if (!['play', 'autoplay', 'guess'].includes(this.state.mode)) {
             this.closeDrawer()
@@ -1209,66 +1273,14 @@ class App extends Component {
         let createNode = tree.get(nextTreePosition) == null
 
         this.setCurrentTreePosition(newTree, nextTreePosition, {madeMove: true})
+
         // on clock expire, gameclock automatically removes inactive player, and
         // also gives the move timing on the expired event, so don't oveerwrite
         if (!expired) clock.makeMove()
-
-        let playerClock = clock.getLastPlayerClockOnMove(player)
-        let playerInitialTime = clock.getPlayerInitialTime(player)
-        let clockMode = clock.getClockMode()
-
-        let hasInitTime = playerInitialTime != null
-        let hasFiniteInitMainTime = hasInitTime &&
-            playerInitialTime.mainTime != null &&
-            playerInitialTime.mainTime > 0 &&
-            Number.isFinite(playerInitialTime.mainTime)
-        let hasPeriodInit = hasInitTime &&
-            playerInitialTime.numPeriods >= 1 &&
-            playerInitialTime.periodMoves >= 1 &&
-            playerInitialTime.periodTime > 0
-        let hasInfiniteTime = !hasInitTime ||
-            (!hasFiniteInitMainTime && clockMode === 'absolutePerPlayer') ||
-            (!hasFiniteInitMainTime &&
-                !hasPeriodInit && clockMode === 'byo-yomi')
-
-        let clockState = playerClock ? playerClock.state : null
-        if (!hasInfiniteTime && playerClock != null
-            && (clockState === 'paused' || clockState === 'expired')) {
-
-            let {
-                elapsedTotalTime: totalTime,
-                elapsedMoveTime: moveTime,
-                elapsedMainTime: mainTime,
-                elapsedNumPeriods: numPeriods,
-                elapsedPeriodMoves: periodMoves,
-                elapsedPeriodTime: periodTime
-            } = playerClock
-
-            let digits = 2
-            totalTime = helper.truncatePreciseToNumber(totalTime, digits)
-            moveTime = helper.truncatePreciseToNumber(moveTime, digits)
-            mainTime = helper.truncatePreciseToNumber(mainTime, digits)
-            numPeriods = helper.truncatePreciseToNumber(numPeriods, digits)
-            periodMoves = helper.truncatePreciseToNumber(periodMoves, digits)
-            periodTime = helper.truncatePreciseToNumber(periodTime, digits)
-
-            // Update elapsed timing info for move
-            let blackProps = ['BA', 'BE', 'BI', 'BN', 'BK', 'BP']
-            let whiteProps = ['WA', 'WE', 'WI', 'WN', 'WK', 'WP']
-            newTree = newTree.mutate(draft => {
-                let timeProps = player > 0 ? blackProps : whiteProps
-                draft.updateProperty(nextTreePosition, timeProps[0], [totalTime])
-                draft.updateProperty(nextTreePosition, timeProps[1], [moveTime])
-                if (hasFiniteInitMainTime) {
-                    draft.updateProperty(nextTreePosition, timeProps[2], [mainTime])
-                }
-                if (clockMode === 'byo-yomi') {
-                    draft.updateProperty(nextTreePosition, timeProps[3], [numPeriods])
-                    draft.updateProperty(nextTreePosition, timeProps[4], [periodMoves])
-                    draft.updateProperty(nextTreePosition, timeProps[5], [periodTime])
-                }
-            })
-            this.setCurrentTreePosition(newTree, nextTreePosition, {madeMove: true})
+        let updatedTreeInfo = this.updateMoveTiming(player, newTree, nextTreePosition)
+        if (updatedTreeInfo != null) {
+            let {newTree, treePosition} = updatedTreeInfo
+            this.setCurrentTreePosition(newTree, treePosition, {madeMove: true})
         }
 
         // Play sounds
@@ -1305,6 +1317,7 @@ class App extends Component {
             // Send command to engine
 
             let passPlayer = pass ? player : null
+            this.engineClockNeedsSync = true
             setTimeout(() => this.generateMove({passPlayer}), setting.get('gtp.move_delay'))
         }
     }
@@ -1509,9 +1522,9 @@ class App extends Component {
 
     // Navigation
 
-    adjustClockToTreePosition({tree, treePosition, currents = null} = {}) {
+    async adjustClockToTreePosition({tree, treePosition, currents = null} = {}) {
         if (tree == null) return
-        let parentList = tree.listNodesVertically(treePosition, -1, currents)
+        let parentList = await (tree.listNodesVertically(treePosition, -1, currents))
         if (parentList == null) return
 
         let blackTime
@@ -1593,7 +1606,7 @@ class App extends Component {
         let result
         if (blackTime == null) {
             let sign = 1
-            clockMode = clock.getClockMode()
+            await (clock.getClockModeAsync().then(res => {clockMode = res})).catch(() => null)
             result = tree.root.data['RE']
             let lostOnTime = false
             if (result != null) {
@@ -1604,7 +1617,9 @@ class App extends Component {
             }
             if (clockMode === 'absolutePerPlayer') {
                 if (lostOnTime && hasBlackMoves) {
-                    let {mainTime} = clock.getPlayerInitialTime(sign)
+                    let initTime
+                    await (clock.getPlayerInitialTimeAsync(sign).then(res => {initTime = res})).catch(() => null)
+                    let {mainTime} = initTime
                     if (mainTime != null) {
                         blackTime = {
                             elapsedMainTime: mainTime,
@@ -1621,12 +1636,14 @@ class App extends Component {
                 }
             } else {
                 if (lostOnTime && hasBlackMoves) {
+                    let initTime
+                    await (clock.getPlayerInitialTimeAsync(sign).then(res => {initTime = res})).catch(() => null)
                     let {
                         mainTime,
                         numPeriods,
                         periodMoves,
                         periodTime
-                    } = clock.getPlayerInitialTime(sign)
+                    } = initTime
                     if (mainTime != null) {
                         blackTime = {
                             elapsedMainTime: mainTime,
@@ -1652,7 +1669,7 @@ class App extends Component {
 
         if (whiteTime == null) {
             let sign = -1
-            clockMode = clock.getClockMode()
+            await (clock.getClockModeAsync().then(res => {clockMode = res})).catch(() => null)
             result = tree.root.data['RE']
             let lostOnTime = false
             if (result != null) {
@@ -1663,7 +1680,9 @@ class App extends Component {
             }
             if (clockMode === 'absolutePerPlayer') {
                 if (lostOnTime && hasWhiteMoves) {
-                    let {mainTime} = clock.getPlayerInitialTime(sign)
+                    let initTime
+                    await (clock.getPlayerInitialTimeAsync(sign).then(res => {initTime = res})).catch(() => null)
+                    let {mainTime} = initTime
                     if (mainTime != null) {
                         whiteTime = {
                             elapsedMainTime: mainTime,
@@ -1680,12 +1699,14 @@ class App extends Component {
                 }
             } else {
                 if (lostOnTime && hasWhiteMoves) {
+                    let initTime
+                    await (clock.getPlayerInitialTimeAsync(sign).then(res => {initTime = res})).catch(() => null)
                     let {
                         mainTime,
                         numPeriods,
                         periodMoves,
                         periodTime
-                    } = clock.getPlayerInitialTime(sign)
+                    } = initTime
                     if (mainTime != null) {
                         whiteTime = {
                             elapsedMainTime: mainTime,
@@ -1760,7 +1781,6 @@ class App extends Component {
             // navigating the game tree
             // pause the clock and switch the clock's current player
             let sign = this.getPlayer(tree, newTreePosition)
-            let expiredBefore = clock.isLastPlayerClockExpired(sign)
             let resumed = (clock.getMode() === 'resume')
             if (!resumed) {
                 // adjust clock to match the time at that game position (clock replay)
@@ -2680,7 +2700,7 @@ class App extends Component {
 
                     if (evt.command.name === 'list_commands') {
                         evt.getResponse().then(response =>
-                            this.setState(async ({engineCommands}) => {
+                            this.setState(({engineCommands}) => {
                                 let j = this.attachedEngineSyncers.indexOf(syncer)
                                 engineCommands[j] = response.content.split('\n')
                                 return {engineCommands}
@@ -2692,19 +2712,15 @@ class App extends Component {
 
                     if (evt.command.name === 'clear_board') {
                         evt.getResponse().then(async (response) =>
-                            this.setState(async ({engineCommands, clockForEngines}) => {
+                            this.setState(async ({engineCommands}) => {
                                 let j = this.attachedEngineSyncers.indexOf(syncer)
-                                let newClockForEngines
                                 await (this.initEngineClock({
                                     engineCommands: engineCommands[j],
-                                    playerIndex: j,
-                                    clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
-                                return {clockForEngines: newClockForEngines}
+                                    playerIndex: j}))
+                                return null
                             })
                         ).catch(helper.noop)
                     }
-
-
                 })
 
                 syncer.controller.on('stderr', ({content}) => {
@@ -2745,15 +2761,10 @@ class App extends Component {
                     let j = this.attachedEngineSyncers.indexOf(syncer)
                     engineCommands[j] = []
 
-                    let newClockForEngines
                     await (this.initEngineClock({
                         engineCommands: engineCommands[j],
-                        playerIndex: j,
-                        clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
-                    return {
-                        engineCommands,
-                        clockForEngines: newClockForEngines
-                    }
+                        playerIndex: j}))
+                    return {engineCommands}
                 }))
 
                 syncer.controller.start()
@@ -2928,12 +2939,22 @@ class App extends Component {
             await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
             let shouldShowClocks = false
             await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
-            let canSyncTime = shouldShowClocks && !(mode === 'resume') && this.state.engineClockNeedsSync
+            let canSyncTime = shouldShowClocks && !(mode === 'resume') && this.engineClockNeedsSync
             if (canSyncTime) {
+                let {gameTrees, gameIndex, gameCurrents, treePosition} = this.state
+                let tree = gameTrees[gameIndex]
+                let sign = this.getPlayer(tree, treePosition)
+                let currents = gameCurrents[gameIndex]
+                // adjust clock to match the time at that game position (clock replay)
+                await (this.adjustClockToTreePosition({
+                    tree: tree,
+                    treePosition: treePosition,
+                    currents: currents
+                }))
+
                 await (this.updateEngineClocks())
                 await (clock.resumeOnPlayStarted())
             }
-            this.setState({engineClockNeedsSync: false})
         } catch (err) {
             this.engineBusySyncing = false
             throw err
@@ -3005,6 +3026,7 @@ class App extends Component {
     }
 
     async generateMove({passPlayer = null, firstMove = true, followUp = false} = {}) {
+
         this.closeDrawer()
 
         if (!firstMove && !this.state.generatingMoves) {
@@ -3133,6 +3155,8 @@ class App extends Component {
         if (!this.state.generatingMoves) return
 
         this.showInfoOverlay('Please wait…')
+        clock.setPlayStarted(false)
+        this.engineClockNeedsSync = false
         this.setState({generatingMoves: false})
     }
 
@@ -3202,9 +3226,8 @@ class App extends Component {
         }
     }
 
-    async initEngineClock({engineCommands, playerIndex, clockForEngines} = {}) {
+    async initEngineClock({engineCommands, playerIndex} = {}) {
         // make a copy
-        let newClockForEngines = [clockForEngines[0], clockForEngines[1]]
         if (engineCommands != null) {
             // attached & got commands for this engine
             // send the clock info
@@ -3233,42 +3256,40 @@ class App extends Component {
                 let autoGenMove = setting.get('gtp.auto_genmove')
                 let autoStart = setting.get('gtp.start_game_after_attach')
                 let autoClocks = autoGenMove && autoStart
-                console.log(response)
                 if (response.error) {
                     // TODO error handling
-                    console.error("Could not initialize engine clock")
+                    console.warn("Could not initialize engine clock")
                 } else if (response.content.trim() === '' && autoClocks) {
-                    console.log("initEngineClock")
-                    newClockForEngines[playerIndex] = true
+                    this.clockForEngines[playerIndex] = true
                     // clock setup
                     // are all clocks setup? (if so start the clock)
                     let other = playerIndex === 0 ? 1 : 0
                     let resumeClocks = false
                     if (this.attachedEngineSyncers[other] != null) {
-                        if (newClockForEngines[other]) resumeClocks = true
+                        if (this.clockForEngines[other]) resumeClocks = true
                     } else {
                         // other player is not an engine
                         resumeClocks = true
                     }
-                    console.log("resumeclocks" + resumeClocks)
-                    if (resumeClocks) clock.resumeOnPlayStarted()
-                    return newClockForEngines
+                    if (resumeClocks && !this.engineClockNeedsSync) {
+                        clock.resumeOnPlayStarted()
+                    }
                 }
             }
         } else {
             // engine detached
-            newClockForEngines[playerIndex] = false
+            this.clockForEngines[playerIndex] = false
             // pause the clocks
             clock.pause()
             // do it twice - using pauseLast so we don't resumeLast
             clock.pauseLast()
-            return newClockForEngines
         }
-        return clockForEngines
     }
 
     async updateEngineClocks() {
-        if (!clock.shouldShowClocksAsync()) return
+        let showClocks
+        await (clock.shouldShowClocksAsync().then(res => {showClocks = res})).catch(() => null)
+        if (!showClocks) return
 
         for (let i = 0; i < this.attachedEngineSyncers.length; i++) {
             let syncer = this.attachedEngineSyncers[i]
@@ -3300,7 +3321,7 @@ class App extends Component {
 
                 if (response.error) {
                     // TODO error handling
-                    console.error("Could not sync engine clock using time_left")
+                    console.warn("Could not sync engine clock using time_left")
                 }
             }
         }

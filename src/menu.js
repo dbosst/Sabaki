@@ -420,7 +420,8 @@ let data = [
                 accelerator: 'F5',
                 click: () => {
                     clock.setPlayStarted(true)
-                    sabaki.setState({generatingMoves: true, engineClockNeedsSync: true})
+                    sabaki.setState({generatingMoves: true})
+                    sabaki.engineClockNeedsSync = true
                     sabaki.generateMove({analyze: sabaki.state.analysis != null, followUp: true})
                 }
             },
@@ -429,7 +430,7 @@ let data = [
                 accelerator: 'F10',
                 click: () => {
                     clock.setPlayStarted(true)
-                    sabaki.setState({engineClockNeedsSync: true})
+                    sabaki.engineClockNeedsSync = true
                     sabaki.generateMove({analyze: sabaki.state.analysis != null})
                 }
             },

@@ -56,20 +56,20 @@ exports.getPlayerEngineTimeLeft = async function (sign) {
     let playerIndex = sign > 0 ? 0 : (sign < 0 ? 1 : null)
     if (playerIndex == null || initialTime[playerIndex] == null) return {}
 
-    let playerInitialTime
+    let initTime
     await (exports.getPlayerInitialTimeAsync(sign).then(res => {
-        playerInitialTime = res})).catch(() => null)
-    if (playerInitialTime == null) return {}
+        initTime = res})).catch(() => null)
+    if (initTime == null) return {}
 
-    let hasInitTime = playerInitialTime != null
+    let hasInitTime = initTime != null
     let hasFiniteInitMainTime = hasInitTime &&
-        playerInitialTime.mainTime != null &&
-        playerInitialTime.mainTime > 0 &&
-        Number.isFinite(playerInitialTime.mainTime)
+        initTime.mainTime != null &&
+        initTime.mainTime > 0 &&
+        Number.isFinite(initTime.mainTime)
     let hasPeriodInit = hasInitTime &&
-        playerInitialTime.numPeriods >= 1 &&
-        playerInitialTime.periodMoves >= 1 &&
-        playerInitialTime.periodTime > 0
+        initTime.numPeriods >= 1 &&
+        initTime.periodMoves >= 1 &&
+        initTime.periodTime > 0
     let hasInfiniteInitTime = !hasInitTime ||
         (!hasFiniteInitMainTime && clockMode === 'absolutePerPlayer') ||
         (!hasFiniteInitMainTime &&
@@ -94,51 +94,51 @@ exports.getPlayerEngineTimeLeft = async function (sign) {
         periodsLeft = 0
     } else if (clockMode === 'absolutePerPlayer' && hasFiniteInitMainTime) {
         if (lastClock == null) {
-            timeLeft = playerInitialTime.mainTime
+            timeLeft = initTime.mainTime
         } else {
-            timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+            timeLeft = initTime.mainTime - lastClock.elapsedMainTime
         }
         stonesLeft = 0
         periodsLeft = 0
     } else if (clockMode === 'byo-yomi') {
         if (lastClock == null) {
-            if (playerInitialTime.mainTime > 0) {
-                timeLeft = playerInitialTime.mainTime
+            if (initTime.mainTime > 0) {
+                timeLeft = initTime.mainTime
                 stonesLeft = 0
                 periodsLeft = 0
             } else {
-                timeLeft = playerInitialTime.periodTime
-                stonesLeft = playerInitialTime.periodMoves
-                periodsLeft = playerInitialTime.numPeriods
+                timeLeft = initTime.periodTime
+                stonesLeft = initTime.periodMoves
+                periodsLeft = initTime.numPeriods
             }
         } else {
-            if (playerInitialTime.numPeriods == 1 &&
-                playerInitialTime.periodMoves >= 1 &&
-                playerInitialTime.periodTime > 0) {
+            if (initTime.numPeriods == 1 &&
+                initTime.periodMoves >= 1 &&
+                initTime.periodTime > 0) {
 
                 // canadian overtime
-                if (playerInitialTime.mainTime > 0) {
-                    timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+                if (initTime.mainTime > 0) {
+                    timeLeft = initTime.mainTime - lastClock.elapsedMainTime
                     stonesLeft = 0
                     periodsLeft = 1
                 } else {
-                    timeLeft = playerInitialTime.periodTime - lastClock.elapsedPeriodTime
-                    stonesLeft = playerInitialTime.periodMoves - lastClock.elapsedPeriodMoves
+                    timeLeft = initTime.periodTime - lastClock.elapsedPeriodTime
+                    stonesLeft = initTime.periodMoves - lastClock.elapsedPeriodMoves
                     periodsLeft = 1
                 }
-            } else if (playerInitialTime.numPeriods >= 1 &&
-                playerInitialTime.periodMoves == 1 &&
-                playerInitialTime.periodTime > 0) {
+            } else if (initTime.numPeriods >= 1 &&
+                initTime.periodMoves == 1 &&
+                initTime.periodTime > 0) {
 
                 // byo-yomi can't be handled by GTP2 spec
-                if (playerInitialTime.mainTime > 0) {
-                    timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+                if (initTime.mainTime > 0) {
+                    timeLeft = initTime.mainTime - lastClock.elapsedMainTime
                     stonesLeft = 0
                     periodsLeft = 0
                 } else {
-                    timeLeft = playerInitialTime.periodTime - lastClock.elapsedPeriodTime
+                    timeLeft = initTime.periodTime - lastClock.elapsedPeriodTime
                     stonesLeft = 1
-                    periodsLeft = playerInitialTime.numPeriods - lastClock.elapsedNumPeriods
+                    periodsLeft = initTime.numPeriods - lastClock.elapsedNumPeriods
                 }
             } else {
                 // unsupported timing mode
@@ -162,6 +162,10 @@ exports.getModeAsync = async function() {
 }
 
 exports.getClockMode = function() {
+    return clockMode
+}
+
+exports.getClockModeAsync = async function() {
     return clockMode
 }
 
@@ -234,7 +238,7 @@ exports.equalMainTime = function() {
     return (initialTime[0],mainTime === initialTime[1],mainTime)
 }
 
-exports.adjustPlayerClock = function(sign = null, action = null, val = null) {
+exports.adjustPlayerClock = async function(sign = null, action = null, val = null) {
     // validate first before setting clock state
     if (sign == null || action == null || val == null) return
 
@@ -397,7 +401,7 @@ exports.changeToPlayer = function(sign = null, {resumeAfter = false} = {}) {
     }
 }
 
-exports.setPlayerClockTime = function({sign = null, elapsedTime = null} = {}) {
+exports.setPlayerClockTime = async function({sign = null, elapsedTime = null} = {}) {
     if (sign == null || elapsedTime == null) return
 
     let {
