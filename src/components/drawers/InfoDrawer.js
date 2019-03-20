@@ -109,7 +109,7 @@ class InfoDrawer extends Component {
 
             if (!this.validateTimeSettings()) {
                 // TODO warn user invalid settings
-                console.log("Invalid time settings")
+                console.warn("Invalid time settings")
                 return
             }
 
