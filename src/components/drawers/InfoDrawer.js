@@ -256,6 +256,7 @@ class InfoDrawer extends Component {
             // setup the clock before the engines so we can set the engines clock
             if (clock.hasInitialTimeChanged()) {
                 sabaki.resetClock()
+                clock.setPlayStarted(true)
             }
             sabaki.attachEngines(...this.state.engines)
 
@@ -269,7 +270,7 @@ class InfoDrawer extends Component {
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {
 
-                if (useClocks) { clock.resume() }
+                if (useClocks) { clock.resumeOnPlayStarted() }
             }
         }
 

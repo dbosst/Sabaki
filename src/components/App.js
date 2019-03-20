@@ -92,6 +92,7 @@ class App extends Component {
             engines: null,
             attachedEngines: [null, null],
             clockForEngines: [false, false],
+            engineClockNeedsSync: false,
             engineCommands: [[], []],
             generatingMoves: false,
             analysisTreePosition: null,
@@ -477,6 +478,7 @@ class App extends Component {
         clock.pause()
         clock.init()
         clock.reset()
+        clock.setPlayStarted(false)
     }
 
     toggleClockPaused() {
@@ -2678,41 +2680,31 @@ class App extends Component {
 
                     if (evt.command.name === 'list_commands') {
                         evt.getResponse().then(response =>
-                            this.setState(async ({engineCommands, clockForEngines}) => {
+                            this.setState(async ({engineCommands}) => {
                                 let j = this.attachedEngineSyncers.indexOf(syncer)
                                 engineCommands[j] = response.content.split('\n')
-                                let newClockForEngines
-                                await (this.initEngineClock({
-                                    engineCommands,
-                                    playerIndex: j,
-                                    clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
-                                return {
-                                    engineCommands,
-                                    clockForEngines: newClockForEngines
-                                }
-                            })
-                        ).catch(helper.noop)
-                    }
-
-                    if (evt.command.name === 'list_commands') {
-                        evt.getResponse().then(response =>
-                            this.setState(async ({engineCommands, clockForEngines}) => {
-                                let j = this.attachedEngineSyncers.indexOf(syncer)
-                                engineCommands[j] = response.content.split('\n')
-                                let newClockForEngines
-                                await (this.initEngineClock({
-                                    engineCommands,
-                                    playerIndex: j,
-                                    clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
-                                return {
-                                    engineCommands,
-                                    clockForEngines: newClockForEngines
-                                }
+                                return {engineCommands}
                             })
                         ).catch(helper.noop)
                     }
 
                     this.handleCommandSent(Object.assign({syncer}, evt))
+
+                    if (evt.command.name === 'clear_board') {
+                        evt.getResponse().then(async (response) =>
+                            this.setState(async ({engineCommands, clockForEngines}) => {
+                                let j = this.attachedEngineSyncers.indexOf(syncer)
+                                let newClockForEngines
+                                await (this.initEngineClock({
+                                    engineCommands: engineCommands[j],
+                                    playerIndex: j,
+                                    clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
+                                return {clockForEngines: newClockForEngines}
+                            })
+                        ).catch(helper.noop)
+                    }
+
+
                 })
 
                 syncer.controller.on('stderr', ({content}) => {
@@ -2755,7 +2747,7 @@ class App extends Component {
 
                     let newClockForEngines
                     await (this.initEngineClock({
-                        engineCommands,
+                        engineCommands: engineCommands[j],
                         playerIndex: j,
                         clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
                     return {
@@ -2931,6 +2923,17 @@ class App extends Component {
                     await controller.sendCommand({name: 'play', args: [color, 'pass']})
                 }
             }
+
+            let mode
+            await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
+            let shouldShowClocks = false
+            await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
+            let canSyncTime = shouldShowClocks && !(mode === 'resume') && this.state.engineClockNeedsSync
+            if (canSyncTime) {
+                await (this.updateEngineClocks())
+                await (clock.resumeOnPlayStarted())
+            }
+            this.setState({engineClockNeedsSync: false})
         } catch (err) {
             this.engineBusySyncing = false
             throw err
@@ -3106,11 +3109,11 @@ class App extends Component {
         )
         let doublePass = previousPass && pass
 
-        let clockMode
-        await (clock.getModeAsync().then(res => {clockMode = res})).catch(() => null)
+        let mode
+        await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
         let shouldShowClocks = false
         await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
-        let canPlay = !shouldShowClocks || clockMode === 'resume'
+        let canPlay = !shouldShowClocks || mode === 'resume'
         if (canPlay) {
             this.makeMove(vertex, {player: sign})
         }
@@ -3139,7 +3142,7 @@ class App extends Component {
         playerIndex = null} = {}) {
 
         if (!(playerIndex === 0 || playerIndex === 1)) {
-            return []
+            return null
         }
         let sign = playerIndex === 0 ? 1 : -1
 
@@ -3177,7 +3180,7 @@ class App extends Component {
                 return ['absolute', mainTime * 1]
             } else {
                 // TODO: Warn user unsupported clock settings for engine
-                return []
+                return null
             }
         } else if (canadianTimeControls) {
             if (mainTime <= 0 && (periodTime <= 0 || numPeriods < 1)) {
@@ -3191,21 +3194,21 @@ class App extends Component {
                 return [mainTime, 0, 0]
             } else {
                 // TODO: Warn user unsupported clock settings for engine
-                return []
+                return null
             }
         } else {
             // TODO: Warn user clock doesn't support time settings
-            return []
+            return null
         }
     }
 
     async initEngineClock({engineCommands, playerIndex, clockForEngines} = {}) {
         // make a copy
         let newClockForEngines = [clockForEngines[0], clockForEngines[1]]
-        if (engineCommands[playerIndex] != null) {
+        if (engineCommands != null) {
             // attached & got commands for this engine
             // send the clock info
-            let commands = engineCommands[playerIndex]
+            let commands = engineCommands
             let kgsTimeSettings = 'kgs-time_settings'
             let kgsTimeControls = commands.includes(kgsTimeSettings)
             let canadianTimeSettings = 'time_settings'
@@ -3213,25 +3216,29 @@ class App extends Component {
             let timeSettingsCmd = kgsTimeControls ? kgsTimeSettings :
                 (canadianTimeControls ? canadianTimeSettings : null)
 
+            let timeSettingsArgs
             if (timeSettingsCmd != null) {
-                let timeSettingsArgs
                 await (this.getGTPTimeSettings({
                     canadianTimeControls,
                     kgsTimeControls,
                     playerIndex}).then(res => {timeSettingsArgs = res})).catch(() => null)
-
+            }
+            if (timeSettingsCmd != null && timeSettingsArgs != null) {
                 let playerSyncer = this.attachedEngineSyncers[playerIndex]
 
-                let responseContent = await (playerSyncer.controller.sendCommand({
+                let response = await (playerSyncer.controller.sendCommand({
                     name: timeSettingsCmd,
-                    args: timeSettingsArgs})
-
-                    .then(res => res.content)).catch(() => null)
+                    args: timeSettingsArgs}))
 
                 let autoGenMove = setting.get('gtp.auto_genmove')
                 let autoStart = setting.get('gtp.start_game_after_attach')
                 let autoClocks = autoGenMove && autoStart
-                if (responseContent.trim() === '' && autoClocks) {
+                console.log(response)
+                if (response.error) {
+                    // TODO error handling
+                    console.error("Could not initialize engine clock")
+                } else if (response.content.trim() === '' && autoClocks) {
+                    console.log("initEngineClock")
                     newClockForEngines[playerIndex] = true
                     // clock setup
                     // are all clocks setup? (if so start the clock)
@@ -3243,7 +3250,8 @@ class App extends Component {
                         // other player is not an engine
                         resumeClocks = true
                     }
-                    if (resumeClocks) clock.resume()
+                    console.log("resumeclocks" + resumeClocks)
+                    if (resumeClocks) clock.resumeOnPlayStarted()
                     return newClockForEngines
                 }
             }
@@ -3259,15 +3267,16 @@ class App extends Component {
         return clockForEngines
     }
 
-    updateEngineClocks() {
-        if (!clock.shouldShowClocks()) return
+    async updateEngineClocks() {
+        if (!clock.shouldShowClocksAsync()) return
 
         for (let i = 0; i < this.attachedEngineSyncers.length; i++) {
             let syncer = this.attachedEngineSyncers[i]
             if (syncer == null || syncer.controller.process == null) continue
 
             let sign = i === 0 ? 1 : -1
-            let expired = clock.isLastPlayerClockExpired(sign)
+            let expired
+            await (clock.isLastPlayerClockExpiredAsync(sign).then(res => {expired = res})).catch(() => null)
             let color = i === 0 ? 'B' : 'W'
             let timeLeftArgs
             if (expired) {
@@ -3275,13 +3284,25 @@ class App extends Component {
             } else {
                 // byo-yomi can't be handled by GTP2 spec
                 // TODO warn user -- new spec needed / custom command (for periodsLeft > 1)
-                let o = clock.getPlayerEngineTimeLeft(sign)
-                if (o != {}) {
+                let o
+                await (clock.getPlayerEngineTimeLeft(sign).then(res => {o = res})).catch(() => null)
+                if (o != {} &&
+                    Number.isFinite(o.timeLeft) &&
+                    Number.isFinite(o.stonesLeft)) {
+
                     timeLeftArgs = [color, o.timeLeft, o.stonesLeft]
                 }
             }
-            syncer.controller.process.stdin.write(
-                'time_left ' + timeLeftArgs.join(' '))
+            if (timeLeftArgs != null) {
+                let response = await (syncer.controller.sendCommand({
+                    name: 'time_left',
+                    args: timeLeftArgs}))
+
+                if (response.error) {
+                    // TODO error handling
+                    console.error("Could not sync engine clock using time_left")
+                }
+            }
         }
     }
 

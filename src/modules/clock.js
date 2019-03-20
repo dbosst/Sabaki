@@ -16,6 +16,7 @@ let adjustAction,
     handleResizeClock,
     initialTimeChanged,
     lastMode,
+    playStarted,
     showClocks
 
 exports.shouldShowClocks = function() {
@@ -50,12 +51,14 @@ exports.getPlayerInitialTimeAsync = async function(sign) {
     return initialTime[playerIndex]
 }
 
-exports.getPlayerEngineTimeLeft = function (sign) {
+exports.getPlayerEngineTimeLeft = async function (sign) {
     if (sign == null || initialTime == null) return {}
     let playerIndex = sign > 0 ? 0 : (sign < 0 ? 1 : null)
     if (playerIndex == null || initialTime[playerIndex] == null) return {}
 
-    let playerInitialTime = exports.getPlayerInitialTime(sign)
+    let playerInitialTime
+    await (exports.getPlayerInitialTimeAsync(sign).then(res => {
+        playerInitialTime = res})).catch(() => null)
     if (playerInitialTime == null) return {}
 
     let hasInitTime = playerInitialTime != null
@@ -73,9 +76,13 @@ exports.getPlayerEngineTimeLeft = function (sign) {
             !hasPeriodInit && clockMode === 'byo-yomi')
     if (hasInfiniteInitTime) return {}
 
-    let lastClock = exports.getLastPlayerClock(sign)
-    let expired = exports.isLastPlayerClockExpired(sign)
 
+    let lastClock
+    await (exports.getLastPlayerClockAsync(sign).then(res => {
+        lastClock = res})).catch(() => null)
+    let expired
+    await (exports.isLastPlayerClockExpiredAsync(sign).then(res => {
+        expired = res})).catch(() => null)
 
     let timeLeft
     let periodsLeft
@@ -142,7 +149,8 @@ exports.getPlayerEngineTimeLeft = function (sign) {
         return {}
     }
 
-    return {timeLeft, stonesLeft}
+    return {timeLeft: Number.parseInt(timeLeft),
+        stonesLeft: Number.parseInt(stonesLeft)}
 }
 
 exports.getMode = function() {
@@ -292,6 +300,17 @@ exports.resumeLast = async function() {
         lastMode = mode
         exports.resume()
     }
+}
+
+exports.resumeOnPlayStarted = async function() {
+    if (playStarted) {
+        playStarted = false
+        exports.resume()
+    }
+}
+
+exports.setPlayStarted = async function(started) {
+    playStarted = started
 }
 
 exports.reset = function() {
@@ -452,6 +471,19 @@ exports.getLastPlayerClock = function(sign = null) {
     }
 }
 
+exports.getLastPlayerClockAsync = async function(sign = null) {
+    let playerIndex = (sign != null && sign > 0) ? 0 :
+        (sign != null && sign < 0) ? 1
+        : null
+    if (playerIndex != null && lastClock != null &&
+        lastClock.length == 2 && lastClock[playerIndex] != null) {
+
+        return lastClock[playerIndex]
+    } else {
+        return null
+    }
+}
+
 exports.getLastPlayerClockOnMove = function(sign = null) {
     let playerIndex = (sign != null && sign > 0) ? 0 :
         (sign != null && sign < 0) ? 1
@@ -470,6 +502,20 @@ exports.getLastActivePlayers = function() {
 }
 
 exports.isLastPlayerClockExpired = function(sign = null) {
+    let playerIndex = (sign != null && sign > 0) ? 0 :
+        (sign != null && sign < 0) ? 1
+        : null
+    if (playerIndex != null && lastClock != null &&
+        lastClock.length == 2 && lastClock[playerIndex] != null &&
+        lastClock[playerIndex].state != null) {
+
+        return (lastClock[playerIndex].state === 'expired')
+    } else {
+        return null
+    }
+}
+
+exports.isLastPlayerClockExpiredAsync = async function(sign = null) {
     let playerIndex = (sign != null && sign > 0) ? 0 :
         (sign != null && sign < 0) ? 1
         : null
