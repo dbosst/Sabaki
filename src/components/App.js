@@ -974,7 +974,7 @@ class App extends Component {
                             x, y,
                             startNodeProperties: {
                                 [annotationProp]: [annotationValues[annotationProp]],
-                                SBKV: [winrate.toString()]
+                                SBKV: [helper.boundFinite(winrate.toString())]
                             }
                         })
                     }
@@ -2855,7 +2855,7 @@ class App extends Component {
                 if (sign < 0) winrate = 100 - winrate
 
                 let newTree = tree.mutate(draft => {
-                    draft.updateProperty(treePosition, 'SBKV', [(Math.round(winrate * 100) / 100).toString()])
+                    draft.updateProperty(treePosition, 'SBKV', [helper.boundFinite(Math.round(winrate * 100) / 100, 100).toString()])
                 })
 
                 this.setState({analysis})

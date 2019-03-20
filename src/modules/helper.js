@@ -123,6 +123,16 @@ exports.isWritableDirectory = function(path) {
     }
 }
 
+exports.boundFinite = function(num, absBound) {
+    if (num < 0 && num == -Infinity) {
+        return -absBound
+    } else if (num > 0 && num == Infinity) {
+        return absBound
+    } else {
+        return num
+    }
+}
+
 exports.truncatePreciseToNumber = function(num, digits = 0) {
     let f = Number.parseFloat(num)
     if (Number.isNaN(f) || !Number.isFinite(f)) return null
