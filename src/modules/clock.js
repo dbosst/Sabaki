@@ -50,6 +50,101 @@ exports.getPlayerInitialTimeAsync = async function(sign) {
     return initialTime[playerIndex]
 }
 
+exports.getPlayerEngineTimeLeft = function (sign) {
+    if (sign == null || initialTime == null) return {}
+    let playerIndex = sign > 0 ? 0 : (sign < 0 ? 1 : null)
+    if (playerIndex == null || initialTime[playerIndex] == null) return {}
+
+    let playerInitialTime = exports.getPlayerInitialTime(sign)
+    if (playerInitialTime == null) return {}
+
+    let hasInitTime = playerInitialTime != null
+    let hasFiniteInitMainTime = hasInitTime &&
+        playerInitialTime.mainTime != null &&
+        playerInitialTime.mainTime > 0 &&
+        Number.isFinite(playerInitialTime.mainTime)
+    let hasPeriodInit = hasInitTime &&
+        playerInitialTime.numPeriods >= 1 &&
+        playerInitialTime.periodMoves >= 1 &&
+        playerInitialTime.periodTime > 0
+    let hasInfiniteInitTime = !hasInitTime ||
+        (!hasFiniteInitMainTime && clockMode === 'absolutePerPlayer') ||
+        (!hasFiniteInitMainTime &&
+            !hasPeriodInit && clockMode === 'byo-yomi')
+    if (hasInfiniteInitTime) return {}
+
+    let lastClock = exports.getLastPlayerClock(sign)
+    let expired = exports.isLastPlayerClockExpired(sign)
+
+
+    let timeLeft
+    let periodsLeft
+    let stonesLeft
+
+    if (expired) {
+        timeLeft = 0
+        stonesLeft = 0
+        periodsLeft = 0
+    } else if (clockMode === 'absolutePerPlayer' && hasFiniteInitMainTime) {
+        if (lastClock == null) {
+            timeLeft = playerInitialTime.mainTime
+        } else {
+            timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+        }
+        stonesLeft = 0
+        periodsLeft = 0
+    } else if (clockMode === 'byo-yomi') {
+        if (lastClock == null) {
+            if (playerInitialTime.mainTime > 0) {
+                timeLeft = playerInitialTime.mainTime
+                stonesLeft = 0
+                periodsLeft = 0
+            } else {
+                timeLeft = playerInitialTime.periodTime
+                stonesLeft = playerInitialTime.periodMoves
+                periodsLeft = playerInitialTime.numPeriods
+            }
+        } else {
+            if (playerInitialTime.numPeriods == 1 &&
+                playerInitialTime.periodMoves >= 1 &&
+                playerInitialTime.periodTime > 0) {
+
+                // canadian overtime
+                if (playerInitialTime.mainTime > 0) {
+                    timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+                    stonesLeft = 0
+                    periodsLeft = 1
+                } else {
+                    timeLeft = playerInitialTime.periodTime - lastClock.elapsedPeriodTime
+                    stonesLeft = playerInitialTime.periodMoves - lastClock.elapsedPeriodMoves
+                    periodsLeft = 1
+                }
+            } else if (playerInitialTime.numPeriods >= 1 &&
+                playerInitialTime.periodMoves == 1 &&
+                playerInitialTime.periodTime > 0) {
+
+                // byo-yomi can't be handled by GTP2 spec
+                if (playerInitialTime.mainTime > 0) {
+                    timeLeft = playerInitialTime.mainTime - lastClock.elapsedMainTime
+                    stonesLeft = 0
+                    periodsLeft = 0
+                } else {
+                    timeLeft = playerInitialTime.periodTime - lastClock.elapsedPeriodTime
+                    stonesLeft = 1
+                    periodsLeft = playerInitialTime.numPeriods - lastClock.elapsedNumPeriods
+                }
+            } else {
+                // unsupported timing mode
+                return {}
+            }
+        }
+    } else {
+        return {}
+    }
+
+    return {timeLeft, stonesLeft}
+}
+
 exports.getMode = function() {
     return mode
 }

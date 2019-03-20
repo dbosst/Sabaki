@@ -540,7 +540,7 @@ class App extends Component {
             gameCurrents: entry.gameTrees.map(_ => ({}))
         })
 
-        this.setCurrentTreePosition(gameTree, entry.treePosition, {clearCache: true})
+        this.setCurrentTreePosition(gameTree, entry.treePosition, {clearCache: true, userNav: true})
     }
 
     undo() {
@@ -701,7 +701,7 @@ class App extends Component {
 
             let [firstTree, ] = gameTrees
             this.loadClockSetupFromTree(firstTree)
-            this.setCurrentTreePosition(firstTree, firstTree.root.id, {clearCache: true})
+            this.setCurrentTreePosition(firstTree, firstTree.root.id, {clearCache: true, userNav: true})
 
             this.treeHash = this.generateTreeHash()
             this.fileHash = this.generateFileHash()
@@ -1515,19 +1515,22 @@ class App extends Component {
         let blackTime
         let whiteTime
         let item = parentList.next()
-        let foundMove = false
+        let hasBlackMoves = false
+        let hasWhiteMoves = false
         // search upwards until we get blackTime, whiteTime, and find a move
-        while((blackTime == null || whiteTime == null || !foundMove) &&
+        while((blackTime == null || whiteTime == null ||
+            !hasBlackMoves || !hasWhiteMoves) &&
             item != null && !item.done) {
 
             let n = item.value
             if (n != null && n.data != null) {
                 let data = n.data
 
-                if (!foundMove) {
-                    if (data['B'] != null || data['W'] != null) {
-                        foundMove = true
-                    }
+                if (!hasBlackMoves && data['B'] != null) {
+                    hasBlackMoves = true
+                }
+                if (!hasWhiteMoves && data['W'] != null) {
+                    hasWhiteMoves = true
                 }
 
                 if (blackTime == null) {
@@ -1598,7 +1601,7 @@ class App extends Component {
                 }
             }
             if (clockMode === 'absolutePerPlayer') {
-                if (lostOnTime && foundMove) {
+                if (lostOnTime && hasBlackMoves) {
                     let {mainTime} = clock.getPlayerInitialTime(sign)
                     if (mainTime != null) {
                         blackTime = {
@@ -1615,7 +1618,7 @@ class App extends Component {
                     }
                 }
             } else {
-                if (lostOnTime && foundMove) {
+                if (lostOnTime && hasBlackMoves) {
                     let {
                         mainTime,
                         numPeriods,
@@ -1657,7 +1660,7 @@ class App extends Component {
                 }
             }
             if (clockMode === 'absolutePerPlayer') {
-                if (lostOnTime && foundMove) {
+                if (lostOnTime && hasWhiteMoves) {
                     let {mainTime} = clock.getPlayerInitialTime(sign)
                     if (mainTime != null) {
                         whiteTime = {
@@ -1674,7 +1677,7 @@ class App extends Component {
                     }
                 }
             } else {
-                if (lostOnTime && foundMove) {
+                if (lostOnTime && hasWhiteMoves) {
                     let {
                         mainTime,
                         numPeriods,
@@ -1708,7 +1711,9 @@ class App extends Component {
         clock.setPlayerClockTime({sign: -1, elapsedTime: whiteTime})
     }
 
-    setCurrentTreePosition(tree, id, {clearCache = false, madeMove = false} = {}) {
+    setCurrentTreePosition(tree, id, {clearCache = false,
+        madeMove = false, userNav = false} = {}) {
+
         if (clearCache) gametree.clearBoardCache()
 
         if (['scoring', 'estimator'].includes(this.state.mode)) {
@@ -1744,14 +1749,18 @@ class App extends Component {
         let newGameTrees = gameTrees.map((t, i) => i !== gameIndex ? t : tree)
         let newTreePosition = id
 
+        if (userNav) {
+            let resumed = (clock.getMode() === 'resume')
+            if (resumed) clock.pauseLast()
+        }
+
         if (!madeMove) {
             // navigating the game tree
             // pause the clock and switch the clock's current player
             let sign = this.getPlayer(tree, newTreePosition)
             let expiredBefore = clock.isLastPlayerClockExpired(sign)
-            let resumeAfter = (clock.getMode() === 'resume')
-            if (!resumeAfter) {
-                if (!expiredBefore) clock.pauseLast()
+            let resumed = (clock.getMode() === 'resume')
+            if (!resumed) {
                 // adjust clock to match the time at that game position (clock replay)
                 this.adjustClockToTreePosition({
                     tree: tree,
@@ -1761,10 +1770,6 @@ class App extends Component {
                 // switch to the current player
                 // change after adjusting time, since activePlayers may change
                 clock.changeToPlayer(sign, {resumeAfter: false})
-
-                // check if playerClock expired
-                let expiredAfter = clock.isLastPlayerClockExpired(sign)
-                if (resumeAfter && !expiredBefore && !expiredAfter) clock.resumeLast()
             }
         }
 
@@ -1786,7 +1791,7 @@ class App extends Component {
         let {gameTrees, gameIndex, gameCurrents, treePosition} = this.state
         let tree = gameTrees[gameIndex]
         let node = tree.navigate(treePosition, step, gameCurrents[gameIndex])
-        if (node != null) this.setCurrentTreePosition(tree, node.id)
+        if (node != null) this.setCurrentTreePosition(tree, node.id, {userNav: true})
     }
 
     goToMoveNumber(number) {
@@ -1799,7 +1804,7 @@ class App extends Component {
         let tree = gameTrees[gameIndex]
         let node = tree.navigate(tree.root.id, Math.round(number), gameCurrents[gameIndex])
 
-        if (node != null) this.setCurrentTreePosition(tree, node.id)
+        if (node != null) this.setCurrentTreePosition(tree, node.id, {userNav: true})
         else this.goToEnd()
     }
 
@@ -1810,7 +1815,7 @@ class App extends Component {
         if (next == null) return
         let sequence = [...tree.getSequence(next.id)]
 
-        this.setCurrentTreePosition(tree, sequence.slice(-1)[0].id)
+        this.setCurrentTreePosition(tree, sequence.slice(-1)[0].id, {userNav: true})
     }
 
     goToPreviousFork() {
@@ -1828,7 +1833,7 @@ class App extends Component {
             }
         }
 
-        this.setCurrentTreePosition(tree, newTreePosition)
+        this.setCurrentTreePosition(tree, newTreePosition, {userNav: true})
     }
 
     goToComment(step) {
@@ -1844,14 +1849,14 @@ class App extends Component {
             }
         }
 
-        if (newTreePosition != null) this.setCurrentTreePosition(tree, newTreePosition)
+        if (newTreePosition != null) this.setCurrentTreePosition(tree, newTreePosition, {userNav: true})
     }
 
     goToBeginning() {
         let {gameTrees, gameIndex} = this.state
         let tree = gameTrees[gameIndex]
 
-        this.setCurrentTreePosition(tree, tree.root.id)
+        this.setCurrentTreePosition(tree, tree.root.id, {userNav: true})
     }
 
     goToEnd() {
@@ -1859,7 +1864,7 @@ class App extends Component {
         let tree = gameTrees[gameIndex]
         let [node] = [...tree.listCurrentNodes(gameCurrents[gameIndex])].slice(-1)
 
-        this.setCurrentTreePosition(tree, node.id)
+        this.setCurrentTreePosition(tree, node.id, {userNav: true})
     }
 
     goToSiblingVariation(step) {
@@ -1869,7 +1874,7 @@ class App extends Component {
         let index = section.findIndex(node => node.id === treePosition)
         let newIndex = ((step + index) % section.length + section.length) % section.length
 
-        this.setCurrentTreePosition(tree, section[newIndex].id)
+        this.setCurrentTreePosition(tree, section[newIndex].id, {userNav: true})
     }
 
     goToMainVariation() {
@@ -1880,14 +1885,14 @@ class App extends Component {
         this.setState({gameCurrents})
 
         if (tree.onMainLine(treePosition)) {
-            this.setCurrentTreePosition(tree, treePosition)
+            this.setCurrentTreePosition(tree, treePosition, {userNav: true})
         } else {
             let id = treePosition
             while (!tree.onMainLine(id)) {
                 id = tree.get(id).parentId
             }
 
-            this.setCurrentTreePosition(tree, id)
+            this.setCurrentTreePosition(tree, id, {userNav: true})
         }
     }
 
@@ -1895,7 +1900,7 @@ class App extends Component {
         let {gameTrees, gameIndex} = this.state
         let newIndex = Math.max(0, Math.min(gameTrees.length - 1, gameIndex + step))
 
-        this.setCurrentTreePosition(gameTrees[newIndex], gameTrees[newIndex].root.id)
+        this.setCurrentTreePosition(gameTrees[newIndex], gameTrees[newIndex].root.id, {userNav: true})
     }
 
     startAutoscrolling(step) {
@@ -2285,7 +2290,7 @@ class App extends Component {
             newPosition = inner(treePosition, [copied])[0]
         })
 
-        this.setCurrentTreePosition(newTree, newPosition)
+        this.setCurrentTreePosition(newTree, newPosition, {userNav: true})
     }
 
     flattenVariation(tree, treePosition) {
@@ -2321,7 +2326,7 @@ class App extends Component {
         })
 
         this.setState({gameTrees: gameTrees.map((t, i) => i === gameIndex ? newTree : t)})
-        this.setCurrentTreePosition(newTree, newTree.root.id)
+        this.setCurrentTreePosition(newTree, newTree.root.id, {userNav: true})
     }
 
     makeMainVariation(tree, treePosition) {
@@ -2343,7 +2348,7 @@ class App extends Component {
 
         gameCurrents[gameIndex] = {}
         this.setState({gameCurrents})
-        this.setCurrentTreePosition(newTree, treePosition)
+        this.setCurrentTreePosition(newTree, treePosition, {userNav: true})
     }
 
     shiftVariation(tree, treePosition, step) {
@@ -2366,7 +2371,7 @@ class App extends Component {
             draft.shiftNode(shiftNode.id, step >= 0 ? 'right' : 'left')
         })
 
-        this.setCurrentTreePosition(newTree, treePosition)
+        this.setCurrentTreePosition(newTree, treePosition, {userNav: true})
     }
 
     removeNode(tree, treePosition, {suppressConfirmation = false} = {}) {
@@ -2404,7 +2409,7 @@ class App extends Component {
             return {gameCurrents}
         })
 
-        this.setCurrentTreePosition(newTree, node.parentId)
+        this.setCurrentTreePosition(newTree, node.parentId, {userNav: true})
     }
 
     removeOtherVariations(tree, treePosition, {suppressConfirmation = false} = {}) {
@@ -2458,7 +2463,7 @@ class App extends Component {
         })
 
         this.setState({gameCurrents})
-        this.setCurrentTreePosition(newTree, treePosition)
+        this.setCurrentTreePosition(newTree, treePosition, {userNav: true})
     }
 
     // Menus
@@ -2620,7 +2625,7 @@ class App extends Component {
                     }
                 })
 
-                this.setCurrentTreePosition(newTree, treePosition)
+                this.setCurrentTreePosition(newTree, treePosition, {userNav: true})
             }
         }], x, y)
     }
@@ -2670,6 +2675,24 @@ class App extends Component {
                         sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
                         engine: engines[i].name
                     })
+
+                    if (evt.command.name === 'list_commands') {
+                        evt.getResponse().then(response =>
+                            this.setState(async ({engineCommands, clockForEngines}) => {
+                                let j = this.attachedEngineSyncers.indexOf(syncer)
+                                engineCommands[j] = response.content.split('\n')
+                                let newClockForEngines
+                                await (this.initEngineClock({
+                                    engineCommands,
+                                    playerIndex: j,
+                                    clockForEngines}).then(res => {newClockForEngines = res})).catch(() => null)
+                                return {
+                                    engineCommands,
+                                    clockForEngines: newClockForEngines
+                                }
+                            })
+                        ).catch(helper.noop)
+                    }
 
                     if (evt.command.name === 'list_commands') {
                         evt.getResponse().then(response =>
@@ -3013,7 +3036,6 @@ class App extends Component {
         try {
             await this.syncEngines({passPlayer})
         } catch (err) {
-            console.log(err)
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
             this.setBusy(false)
@@ -3142,14 +3164,15 @@ class App extends Component {
             if (mainTime <= 0 && (periodTime <= 0 || numPeriods < 1)) {
                 // Infinite Time
                 return ['canadian', 0, 1, 0]
+            } else if (numPeriods == 1 && periodMoves >= 1 &&
+                periodTime > 0) {
+
+                // prefer canadian over byo-yomi if equivalent
+                return ['canadian', mainTime, periodTime, periodMoves]
             } else if (numPeriods >= 1 && periodMoves == 1 &&
                 periodTime > 0) {
 
                 return ['byoyomi', mainTime, periodTime, numPeriods]
-            } else if (numPeriods == 1 && periodMoves >= 1 &&
-                periodTime > 0) {
-
-                return ['canadian', mainTime, periodTime, periodMoves]
             } else if (mainTime > 0 && !(periodTime > 0 && numPeriods >= 1)) {
                 return ['absolute', mainTime * 1]
             } else {
@@ -3234,6 +3257,32 @@ class App extends Component {
             return newClockForEngines
         }
         return clockForEngines
+    }
+
+    updateEngineClocks() {
+        if (!clock.shouldShowClocks()) return
+
+        for (let i = 0; i < this.attachedEngineSyncers.length; i++) {
+            let syncer = this.attachedEngineSyncers[i]
+            if (syncer == null || syncer.controller.process == null) continue
+
+            let sign = i === 0 ? 1 : -1
+            let expired = clock.isLastPlayerClockExpired(sign)
+            let color = i === 0 ? 'B' : 'W'
+            let timeLeftArgs
+            if (expired) {
+                timeLeftArgs = [color, 0, 0]
+            } else {
+                // byo-yomi can't be handled by GTP2 spec
+                // TODO warn user -- new spec needed / custom command (for periodsLeft > 1)
+                let o = clock.getPlayerEngineTimeLeft(sign)
+                if (o != {}) {
+                    timeLeftArgs = [color, o.timeLeft, o.stonesLeft]
+                }
+            }
+            syncer.controller.process.stdin.write(
+                'time_left ' + timeLeftArgs.join(' '))
+        }
     }
 
     // Render
