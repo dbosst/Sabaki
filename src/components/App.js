@@ -1130,7 +1130,7 @@ class App extends Component {
             let newTree = tree.mutate(draft => {
                 draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
             })
-            this.setCurrentTreePosition(newTree, treePosition)
+            this.setCurrentTreePosition(newTree, treePosition, {madeMove: true})
 
             this.makeMove([-1, -1], {player: playerSign, expired: true})
 
