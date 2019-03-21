@@ -941,6 +941,10 @@ class App extends Component {
         if (['play', 'autoplay'].includes(this.state.mode)) {
             if (button === 0) {
                 if (board.get(vertex) === 0) {
+                    let shouldShowClocks = clock.shouldShowClocks()
+                    let mode = clock.getMode()
+                    let canPlayResume = shouldShowClocks && mode !== 'resume'
+                    if (canPlayResume) clock.resume()
                     let autoGenmove = setting.get('gtp.auto_genmove')
                     this.makeMove(vertex, {sendToEngine: autoGenmove})
                 } else if (
