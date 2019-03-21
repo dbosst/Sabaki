@@ -1,4 +1,5 @@
 const helper = require('../modules/helper')
+const sound = require('./sound')
 
 let adjustAction,
     adjustEventID,
@@ -283,6 +284,7 @@ exports.makeMove = function() {
 
 exports.pause = async function() {
     mode = 'pause'
+    sound.stopTimeCountDown()
     exports.forceUpdate()
 }
 

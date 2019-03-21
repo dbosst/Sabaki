@@ -18,6 +18,13 @@ function prepareFunction(sounds) {
     }
 }
 
+let stopPlayback = function(media) {
+    return async function() {
+        media.pause()
+        media.currentTime = 0
+    }
+}
+
 exports.playPachi = prepareFunction([...Array(5)].map((_, i) => new Audio(`./data/${i}.mp3`)))
 
 exports.playCapture = prepareFunction([...Array(5)].map((_, i) => new Audio(`./data/capture${i}.mp3`)))
@@ -25,3 +32,12 @@ exports.playCapture = prepareFunction([...Array(5)].map((_, i) => new Audio(`./d
 exports.playPass = prepareFunction([new Audio('./data/pass.mp3')])
 
 exports.playNewGame = prepareFunction([new Audio('./data/newgame.mp3')])
+
+let soundTimeCountDown = new Audio('./data/timecountdown.mp3')
+exports.stopTimeCountDown = stopPlayback(soundTimeCountDown)
+
+exports.playTimeCountDown = prepareFunction([soundTimeCountDown])
+
+exports.playOvertime = prepareFunction([new Audio('./data/overtime.mp3')])
+
+exports.playTimeExpired = prepareFunction([new Audio('./data/timeexpired.mp3')])

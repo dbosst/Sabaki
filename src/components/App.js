@@ -681,6 +681,8 @@ class App extends Component {
         if (!suppressAskForSave && !this.askForSave()) return
         gtplogger.rotate()
 
+        sound.stopTimeCountDown()
+
         this.setBusy(true)
         if (this.state.openDrawer !== 'gamechooser') this.closeDrawer()
         this.setMode('play')
@@ -1108,10 +1110,18 @@ class App extends Component {
             clock: clk = null,
             playerID = null} = o
 
+        let playerIndex
+        let playerSign
+        if (playerID === 'b') {
+            playerIndex = 0
+            playerSign = 1
+        } else {
+            playerIndex = 1
+            playerSign = -1
+        }
+
         if (eventName === 'Expired') {
             let {gameTrees, gameIndex, treePosition} = this.state
-
-            let playerSign = (playerID === 'b' ? 1 : -1)
             let winningPlayer = (playerID === 'b' ? 'W' : 'B')
             let tree = gameTrees[gameIndex]
 
@@ -1128,6 +1138,37 @@ class App extends Component {
 
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
+
+            // Don't play audio for engines
+            if (this.attachedEngineSyncers[playerIndex] != null) {
+                return
+            }
+            sound.playTimeExpired()
+        } else if (eventName === 'TenCount') {
+            // Don't play audio for engines
+            console.log("10count")
+            if (this.attachedEngineSyncers[playerIndex] != null) {
+                return
+            }
+
+            // Only play if periodTime >= 10 seconds
+            let initTime = clock.getPlayerInitialTime(playerSign)
+            console.log(initTime)
+            if (initTime != null && initTime.periodTime >= 10) {
+                console.log("playCountdown")
+                sound.playTimeCountDown()
+            }
+        } else if (eventName === 'ElapsedMainTime') {
+            // Don't play audio for engines
+            if (this.attachedEngineSyncers[playerIndex] != null) {
+                return
+            }
+
+            // Only play if mainTime > 0 seconds
+            let initTime = clock.getPlayerInitialTime(playerSign)
+            if (initTime != null && initTime.mainTime > 0) {
+                sound.playOvertime()
+            }
         }
     }
 
@@ -1283,6 +1324,8 @@ class App extends Component {
         }
 
         // Play sounds
+
+        sound.stopTimeCountDown()
 
         if (!pass) {
             let delay = setting.get('sound.capture_delay_min')
@@ -3060,6 +3103,7 @@ class App extends Component {
         try {
             await this.syncEngines({passPlayer})
         } catch (err) {
+            clock.pause()
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
             this.setBusy(false)
@@ -3100,6 +3144,7 @@ class App extends Component {
         let board = gametree.getBoard(tree, tree.root.id)
 
         if (responseContent == null) {
+            clock.pause()
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
             this.setBusy(false)
@@ -3143,6 +3188,7 @@ class App extends Component {
             await helper.wait(setting.get('gtp.move_delay'))
             this.generateMove({passPlayer: pass ? sign : null, firstMove: false, followUp})
         } else {
+            clock.pause()
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
         }
