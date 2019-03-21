@@ -678,8 +678,8 @@ class App extends Component {
     }
 
     async loadGameTrees(gameTrees, {suppressAskForSave = false} = {}) {
-
         if (!suppressAskForSave && !this.askForSave()) return
+        gtplogger.rotate()
 
         this.setBusy(true)
         if (this.state.openDrawer !== 'gamechooser') this.closeDrawer()
