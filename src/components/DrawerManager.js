@@ -20,6 +20,45 @@ class DrawerManager extends Component {
                 draft.updateProperty(draft.root.id, 'RE', [resultString])
             })
             sabaki.closeDrawer()
+            let playerIndex
+            let playerSign
+            let otherIndex
+            let otherSign
+            let winner
+            if (resultString.splice(0,2) === 'B+') {
+                winner = 1
+            } else if (resultString.splice(0,2) === 'W+') {
+                winner = -1
+            }
+            if (winner > 0) {
+                playerIndex = 0
+                otherIndex = 1
+                playerSign = 1
+                otherSign = -1
+            } else if (winner < 0) {
+                playerIndex = 1
+                otherIndex = 0
+                playerSign = -1
+                otherSign = 1
+            }
+            if (winner != null) {
+                if (sabaki.attachedEngineSyncers[playerIndex]) {
+                    gtplogger.write({
+                        type: 'meta',
+                        message: 'Engine Loses On Points',
+                        sign: playerSign,
+                        engine: sabaki.state.attachedEngines[playerIndex].name
+                    })
+                }
+                if (sabaki.attachedEngineSyncers[otherIndex]) {
+                    gtplogger.write({
+                        type: 'meta',
+                        message: 'Engine Wins On Points',
+                        sign: otherSign,
+                        engine: sabaki.state.attachedEngines[otherIndex].name
+                    })
+                }
+            }
             // Second of two consecutive pauseLast()
             clock.pauseLast()
             setTimeout(() => {

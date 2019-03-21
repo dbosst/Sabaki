@@ -1122,12 +1122,18 @@ class App extends Component {
 
         let playerIndex
         let playerSign
+        let otherIndex
+        let otherSign
         if (playerID === 'b') {
             playerIndex = 0
+            otherIndex = 1
             playerSign = 1
+            otherSign = -1
         } else {
             playerIndex = 1
+            otherIndex = 0
             playerSign = -1
+            otherSign = 1
         }
 
         if (eventName === 'Expired') {
@@ -1148,6 +1154,23 @@ class App extends Component {
 
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
+
+            if (this.attachedEngineSyncers[playerIndex]) {
+                gtplogger.write({
+                    type: 'meta',
+                    message: 'Engine Loses On Time',
+                    sign: playerSign,
+                    engine: this.state.attachedEngines[playerIndex].name
+                })
+            }
+            if (this.attachedEngineSyncers[otherIndex]) {
+                gtplogger.write({
+                    type: 'meta',
+                    message: 'Engine Wins On Time',
+                    sign: otherSign,
+                    engine: this.state.attachedEngines[otherIndex].name
+                })
+            }
         } else if (eventName === 'TenCount') {
             if (!setting.get('sound.countdown')) return
             // Don't play audio for engines
@@ -1379,6 +1402,38 @@ class App extends Component {
         this.makeMove([-1, -1], {player})
 
         this.events.emit('resign', {player})
+
+        let playerIndex
+        let playerSign
+        let otherIndex
+        let otherSign
+        if (player > 0) {
+            playerIndex = 0
+            otherIndex = 1
+            playerSign = 1
+            otherSign = -1
+        } else {
+            playerIndex = 1
+            otherIndex = 0
+            playerSign = -1
+            otherSign = 1
+        }
+        if (this.attachedEngineSyncers[playerIndex]) {
+            gtplogger.write({
+                type: 'meta',
+                message: 'Engine Loses By Resignation',
+                sign: playerSign,
+                engine: this.state.attachedEngines[playerIndex].name
+            })
+        }
+        if (this.attachedEngineSyncers[otherIndex]) {
+            gtplogger.write({
+                type: 'meta',
+                message: 'Engine Wins By Resignation',
+                sign: otherSign,
+                engine: this.state.attachedEngines[otherIndex].name
+            })
+        }
     }
 
     useTool(tool, vertex, argument = null) {
