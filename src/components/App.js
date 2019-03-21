@@ -486,6 +486,7 @@ class App extends Component {
         if (mode === 'resume') {
             clock.pause()
         } else if (mode != null) {
+            clock.setClockEnabled(true)
             clock.resume()
         }
     }
@@ -689,6 +690,7 @@ class App extends Component {
 
         await helper.wait(setting.get('app.loadgame_delay'))
         clock.setInitialTimeNull()
+        clock.setClockEnabled(false)
         this.resetClock()
 
         if (gameTrees.length != 0) {
@@ -943,8 +945,12 @@ class App extends Component {
                 if (board.get(vertex) === 0) {
                     let shouldShowClocks = clock.shouldShowClocks()
                     let mode = clock.getMode()
-                    let canPlayResume = shouldShowClocks && mode !== 'resume'
-                    if (canPlayResume) clock.resume()
+                    let canPlayResume = mode !== 'resume'
+                    if (shouldShowClocks) {
+                        this.engineClockNeedsSync = true
+                        if (canPlayResume) clock.resume()
+                        clock.setPlayStarted(true)
+                    }
                     let autoGenmove = setting.get('gtp.auto_genmove')
                     this.makeMove(vertex, {sendToEngine: autoGenmove})
                 } else if (
@@ -1167,6 +1173,7 @@ class App extends Component {
         let playerClock = clock.getLastPlayerClockOnMove(sign)
         let initTime = clock.getPlayerInitialTime(sign)
         let clockMode = clock.getClockMode()
+        let clockEnabled = clock.getClockEnabled()
 
         let hasInitTime = initTime != null
         let hasFiniteInitMainTime = hasInitTime &&
@@ -1184,7 +1191,7 @@ class App extends Component {
 
         let clockState = playerClock ? playerClock.state : null
 
-        if (hasInfiniteTime || playerClock == null ||
+        if (hasInfiniteTime || playerClock == null || !clockEnabled ||
             !(clockState === 'paused' || clockState === 'expired')) {
 
             return null
@@ -2972,8 +2979,8 @@ class App extends Component {
             await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
             let shouldShowClocks = false
             await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
-            let canSyncTime = shouldShowClocks && !(mode === 'resume') && this.engineClockNeedsSync
-            if (canSyncTime) {
+            let canSyncTime = shouldShowClocks && !(mode === 'resume')
+            if (canSyncTime && this.engineClockNeedsSync) {
                 let {gameTrees, gameIndex, gameCurrents, treePosition} = this.state
                 let tree = gameTrees[gameIndex]
                 let sign = this.getPlayer(tree, treePosition)
@@ -2986,8 +2993,8 @@ class App extends Component {
                 }))
 
                 await (this.updateEngineClocks())
-                await (clock.resumeOnPlayStarted())
             }
+            if (canSyncTime) await (clock.resumeOnPlayStarted())
         } catch (err) {
             this.engineBusySyncing = false
             throw err
@@ -3170,10 +3177,10 @@ class App extends Component {
         await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
         let shouldShowClocks = false
         await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
-        let canPlay = !shouldShowClocks || mode === 'resume'
-        if (canPlay) {
-            this.makeMove(vertex, {player: sign})
-        }
+        let clockEnabled = false
+        await (clock.getClockEnabledAsync().then(res => {clockEnabled = res})).catch(() => null)
+        let canPlay = !shouldShowClocks || mode === 'resume' || !clockEnabled
+        if (canPlay) this.makeMove(vertex, {player: sign})
 
         if (followUp && otherSyncer != null && !doublePass && canPlay) {
             await helper.wait(setting.get('gtp.move_delay'))
@@ -3326,9 +3333,11 @@ class App extends Component {
     }
 
     async updateEngineClocks() {
-        let showClocks
+        let shouldShowClocks
         await (clock.shouldShowClocksAsync().then(res => {showClocks = res})).catch(() => null)
-        if (!showClocks) return
+        let clockEnabled = false
+        await (clock.getClockEnabledAsync().then(res => {clockEnabled = res})).catch(() => null)
+        if (!shouldShowClocks || !clockEnabled) return
 
         for (let i = 0; i < this.attachedEngineSyncers.length; i++) {
             let syncer = this.attachedEngineSyncers[i]

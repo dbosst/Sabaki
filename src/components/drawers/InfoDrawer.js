@@ -255,6 +255,7 @@ class InfoDrawer extends Component {
             sabaki.closeDrawer()
             // setup the clock before the engines so we can set the engines clock
             if (clock.hasInitialTimeChanged()) {
+                clock.setClockEnabled(true)
                 sabaki.resetClock()
                 clock.setPlayStarted(true)
             }
@@ -266,7 +267,6 @@ class InfoDrawer extends Component {
             let startGame = setting.get('gtp.start_game_after_attach')
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
-                sabaki.engineClockNeedsSync = true
                 sabaki.generateMove({followUp: true})
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {

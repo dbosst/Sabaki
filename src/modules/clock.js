@@ -18,7 +18,8 @@ let adjustAction,
     initialTimeChanged,
     lastMode,
     playStarted,
-    showClocks
+    showClocks,
+    clockEnabled
 
 exports.shouldShowClocks = function() {
     return showClocks
@@ -26,6 +27,23 @@ exports.shouldShowClocks = function() {
 
 exports.shouldShowClocksAsync = async function() {
     return showClocks
+}
+
+exports.getClockEnabled = function() {
+    return clockEnabled
+}
+
+exports.getClockEnabledAsync = async function() {
+    return clockEnabled
+}
+
+exports.setClockEnabled = async function(val) {
+    if (val === false) exports.pause()
+    clockEnabled = val
+}
+
+exports.toggleClockEnabled = function() {
+    exports.setClockEnabled(!clockEnabled)
 }
 
 exports.getPlayerInitialTime = function(sign) {
@@ -283,6 +301,7 @@ exports.makeMove = function() {
 }
 
 exports.pause = async function() {
+    if (!clockEnabled) return
     mode = 'pause'
     sound.stopTimeCountDown()
     exports.forceUpdate()
@@ -294,6 +313,7 @@ exports.pauseLast = async function() {
 }
 
 exports.resume = async function() {
+    if (!clockEnabled) return
     if (mode == null || mode === 'init' || mode === 'reset') {
         checkTwoClocks()
     }
