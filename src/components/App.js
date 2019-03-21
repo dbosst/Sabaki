@@ -3175,7 +3175,10 @@ class App extends Component {
             await helper.wait(setting.get('gtp.move_delay'))
             this.generateMove({passPlayer: pass ? sign : null, firstMove: false, followUp})
         } else {
-            clock.pause()
+            if (canPlay && (doublePass || (!followUp && otherSyncer != null))) {
+                // other player is not an engine
+                clock.pause()
+            }
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
         }
