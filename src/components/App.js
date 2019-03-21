@@ -678,7 +678,6 @@ class App extends Component {
     }
 
     async loadGameTrees(gameTrees, {suppressAskForSave = false} = {}) {
-        gtplogger.rotate()
 
         if (!suppressAskForSave && !this.askForSave()) return
 
