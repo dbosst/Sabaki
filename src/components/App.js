@@ -1140,16 +1140,19 @@ class App extends Component {
             this.hideInfoOverlay()
         } else if (eventName === 'TenCount') {
             // Don't play audio for engines
-            console.log("10count")
             if (this.attachedEngineSyncers[playerIndex] != null) {
                 return
             }
-
-            // Only play if periodTime >= 10 seconds
+            // Only play for overtime, and when periodTime >= 10 seconds
             let initTime = clock.getPlayerInitialTime(playerSign)
-            console.log(initTime)
-            if (initTime != null && initTime.periodTime >= 10) {
-                console.log("playCountdown")
+            let hasInitTime = initTime != null
+            let hasPeriodInit = hasInitTime &&
+                initTime.numPeriods >= 1 &&
+                initTime.periodMoves >= 1 &&
+                initTime.periodTime > 0
+            // determine if in overtime
+            let inOvertime = (initTime.mainTime - clk.elapsedMainTime) <= 0
+            if (hasPeriodInit && initTime.periodTime >= 10) {
                 sound.playTimeCountDown()
             }
         }
