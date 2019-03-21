@@ -108,6 +108,7 @@ let defaults = {
     'sgf.comment_properties': ['C', 'N', 'UC', 'GW', 'DM', 'GB', 'BM', 'TE', 'DO', 'IT'],
     'sound.capture_delay_max': 500,
     'sound.capture_delay_min': 300,
+    'sound.countdown': true,
     'sound.enable': true,
     'theme.custom_whitestones': null,
     'theme.custom_blackstones': null,

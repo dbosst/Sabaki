@@ -86,6 +86,10 @@ class GeneralTab extends Component {
                     onChange: this.handleSoundEnabledChange
                 }),
                 h(PreferencesItem, {
+                    id: 'sound.countdown',
+                    text: 'Enable countdown sound',
+                }),
+                h(PreferencesItem, {
                     id: 'game.goto_end_after_loading',
                     text: 'Jump to end after loading file'
                 }),

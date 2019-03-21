@@ -1139,6 +1139,7 @@ class App extends Component {
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
         } else if (eventName === 'TenCount') {
+            if (!setting.get('sound.countdown')) return
             // Don't play audio for engines
             if (this.attachedEngineSyncers[playerIndex] != null) {
                 return
