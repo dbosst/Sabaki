@@ -60,7 +60,10 @@ class CleanMarkupDrawer extends Component {
                     comments: ['C', 'N'],
                     annotations: ['DM', 'GB', 'GW', 'UC', 'BM', 'DO', 'IT', 'TE'],
                     hotspots: ['HO'],
-                    winrate: ['SBKV']
+                    winrate: ['SBKV'],
+                    clockdata: ['BA', 'BE', 'BI', 'BN', 'BK', 'BP',
+                        'WA', 'WE', 'WI', 'WN', 'WK', 'WP',
+                        'TC', 'TN', 'TK', 'TP', 'TS', 'TY', 'TO', 'TL', 'TQ']
                 }
 
                 let properties = Object.keys(data)
@@ -72,6 +75,7 @@ class CleanMarkupDrawer extends Component {
 
                 let newTree = work(properties)
 
+                sabaki.loadClockSetupFromTree(newTree)
                 sabaki.setCurrentTreePosition(newTree, this.props.treePosition)
                 sabaki.setBusy(false)
                 sabaki.closeDrawer()
@@ -171,6 +175,10 @@ class CleanMarkupDrawer extends Component {
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.winrate',
                         text: 'Winrate data'
+                    }),
+                    h(CleanMarkupItem, {
+                        id: 'cleanmarkup.clockdata',
+                        text: 'Clock data'
                     })
                 ),
 
