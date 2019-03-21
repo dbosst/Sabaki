@@ -1138,12 +1138,6 @@ class App extends Component {
 
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
-
-            // Don't play audio for engines
-            if (this.attachedEngineSyncers[playerIndex] != null) {
-                return
-            }
-            sound.playTimeExpired()
         } else if (eventName === 'TenCount') {
             // Don't play audio for engines
             console.log("10count")
@@ -1157,17 +1151,6 @@ class App extends Component {
             if (initTime != null && initTime.periodTime >= 10) {
                 console.log("playCountdown")
                 sound.playTimeCountDown()
-            }
-        } else if (eventName === 'ElapsedMainTime') {
-            // Don't play audio for engines
-            if (this.attachedEngineSyncers[playerIndex] != null) {
-                return
-            }
-
-            // Only play if mainTime > 0 seconds
-            let initTime = clock.getPlayerInitialTime(playerSign)
-            if (initTime != null && initTime.mainTime > 0) {
-                sound.playOvertime()
             }
         }
     }

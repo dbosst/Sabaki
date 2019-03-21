@@ -37,7 +37,3 @@ let soundTimeCountDown = new Audio('./data/timecountdown.mp3')
 exports.stopTimeCountDown = stopPlayback(soundTimeCountDown)
 
 exports.playTimeCountDown = prepareFunction([soundTimeCountDown])
-
-exports.playOvertime = prepareFunction([new Audio('./data/overtime.mp3')])
-
-exports.playTimeExpired = prepareFunction([new Audio('./data/timeexpired.mp3')])
