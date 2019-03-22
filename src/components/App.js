@@ -486,6 +486,11 @@ class App extends Component {
         if (mode === 'resume') {
             clock.pause()
         } else if (mode != null) {
+            clock.resetLastElapsedMoveTime(1)
+            clock.resetLastElapsedMoveTime(-1)
+            clock.setUnknownLastMoveTime(true)
+            clock.setPlayStarted(true)
+            this.engineClockNeedsSync = true
             clock.setClockEnabled(true)
             clock.resume()
         }
@@ -1106,22 +1111,38 @@ class App extends Component {
         this.events.emit('vertexClick')
     }
 
+    setupClockForEngineMove() {
+        let shouldShowClocks = clock.shouldShowClocks()
+        if (shouldShowClocks) {
+            clock.setPlayStarted(true)
+            this.engineClockNeedsSync = true
+
+            // determine whether resuming and don't have elapsed move timing
+            let mode = clock.getMode()
+            let canPlayResume = mode !== 'resume'
+            let player = this.inferredState.currentPlayer
+            if (canPlayResume) {
+                clock.resetLastElapsedMoveTime(1)
+                clock.resetLastElapsedMoveTime(-1)
+                clock.setUnknownLastMoveTime(true)
+            }
+        }
+    }
+
     setupClockForUserMove() {
         let shouldShowClocks = clock.shouldShowClocks()
         let mode = clock.getMode()
         let canPlayResume = mode !== 'resume'
-        if (shouldShowClocks) {
+        if (shouldShowClocks && canPlayResume) {
+            clock.resetLastElapsedMoveTime(1)
+            clock.resetLastElapsedMoveTime(-1)
+            clock.setUnknownLastMoveTime(true)
             let player = this.inferredState.currentPlayer
             let playerIndex = player > 0 ? 0 : 1
-            if (canPlayResume) {
-                this.engineClockNeedsSync = true
-                clock.setPlayStarted(true)
-            }
-            if (canPlayResume &&
-                this.attachedEngineSyncers[playerIndex] == null) {
-
+            this.engineClockNeedsSync = true
+            clock.setPlayStarted(true)
+            if (this.attachedEngineSyncers[playerIndex] == null)
                 clock.resumeOnPlayStarted()
-            }
         }
     }
 
@@ -1836,8 +1857,8 @@ class App extends Component {
             }
         }
 
-        clock.setPlayerClockTime({sign: 1, elapsedTime: blackTime})
-        clock.setPlayerClockTime({sign: -1, elapsedTime: whiteTime})
+        await (clock.setPlayerClockTime({sign: 1, elapsedTime: blackTime}))
+        await (clock.setPlayerClockTime({sign: -1, elapsedTime: whiteTime}))
     }
 
     setCurrentTreePosition(tree, id, {clearCache = false,
@@ -3058,6 +3079,14 @@ class App extends Component {
                     treePosition: treePosition,
                     currents: currents
                 }))
+
+                let unknownLastMoveTime = false
+                await (clock.getUnknownLastMoveTime().then(res => {unknownLastMoveTime = res})).catch(() => null)
+                if (unknownLastMoveTime) {
+                    await (clock.resetLastElapsedMoveTime(1))
+                    await (clock.resetLastElapsedMoveTime(-1))
+                    await (clock.setUnknownLastMoveTime(false))
+                }
 
                 await (this.updateEngineClocks())
             }

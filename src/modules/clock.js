@@ -18,6 +18,7 @@ let adjustAction,
     initialTimeChanged,
     lastMode,
     playStarted,
+    unknownLastMoveTime,
     showClocks,
     clockEnabled
 
@@ -38,7 +39,7 @@ exports.getClockEnabledAsync = async function() {
 }
 
 exports.setClockEnabled = async function(val) {
-    if (val === false) exports.pause()
+    if (val === false) await (exports.pause())
     clockEnabled = val
 }
 
@@ -191,14 +192,14 @@ exports.getClockModeAsync = async function() {
 let setShowClocks = async function(show) {
     if (show !== showClocks) {
         showClocks = show
-        exports.forceUpdate()
+        await (exports.forceUpdate())
     }
 }
 
 let checkTwoClocks = async function() {
     // check how many clocks set; if only one set, set the other to Infinity
     if (initialTime == null || initialTime.length !== 2) {
-        setShowClocks(false)
+        await (setShowClocks(false))
         return
     }
 
@@ -272,7 +273,7 @@ exports.adjustPlayerClock = async function(sign = null, action = null, val = nul
     adjustAction = action
     adjustPlayerID = playerID
     adjustVal = val
-    exports.forceUpdate()
+    await (exports.forceUpdate())
 }
 
 exports.init = function() {
@@ -304,34 +305,34 @@ exports.pause = async function() {
     if (!clockEnabled) return
     mode = 'pause'
     sound.stopTimeCountDown()
-    exports.forceUpdate()
+    await (exports.forceUpdate())
 }
 
 exports.pauseLast = async function() {
     lastMode = mode
-    exports.pause()
+    await (exports.pause())
 }
 
 exports.resume = async function() {
     if (!clockEnabled) return
     if (mode == null || mode === 'init' || mode === 'reset') {
-        checkTwoClocks()
+        await (checkTwoClocks())
     }
     mode = 'resume'
-    exports.forceUpdate()
+    await (exports.forceUpdate())
 }
 
 exports.resumeLast = async function() {
     if (lastMode === 'resume') {
         lastMode = mode
-        exports.resume()
+        await (exports.resume())
     }
 }
 
 exports.resumeOnPlayStarted = async function() {
     if (playStarted) {
         playStarted = false
-        exports.resume()
+        await (exports.resume())
     }
 }
 
@@ -435,12 +436,27 @@ exports.setPlayerClockTime = async function({sign = null, elapsedTime = null} = 
         elapsedTotalTime: totalTime
     } = elapsedTime
 
-    exports.adjustPlayerClock(sign, 'setElapsedMainTime', mainTime)
-    exports.adjustPlayerClock(sign, 'setElapsedNumPeriods', numPeriods)
-    exports.adjustPlayerClock(sign, 'setElapsedPeriodMoves', periodMoves)
-    exports.adjustPlayerClock(sign, 'setElapsedPeriodTime', periodTime)
-    exports.adjustPlayerClock(sign, 'setElapsedMoveTime', moveTime)
-    exports.adjustPlayerClock(sign, 'setElapsedTotalTime', totalTime)
+    await (exports.adjustPlayerClock(sign, 'setElapsedMainTime', mainTime))
+    await (exports.adjustPlayerClock(sign, 'setElapsedNumPeriods', numPeriods))
+    await (exports.adjustPlayerClock(sign, 'setElapsedPeriodMoves', periodMoves))
+    await (exports.adjustPlayerClock(sign, 'setElapsedPeriodTime', periodTime))
+    await (exports.adjustPlayerClock(sign, 'setElapsedMoveTime', moveTime))
+    await (exports.adjustPlayerClock(sign, 'setElapsedTotalTime', totalTime))
+}
+
+exports.resetLastElapsedMoveTime = async function(sign = null) {
+    if (sign == null) return
+    await (exports.adjustPlayerClock(sign, 'setElapsedMoveTime', 0))
+    if (lastClock != null) lastClock.elapsedMoveTime = 0
+    if (lastClockOnMove != null) lastClockOnMove.elapsedMoveTime = 0
+}
+
+exports.setUnknownLastMoveTime = async function(val) {
+    unknownLastMoveTime = val
+}
+
+exports.getUnknownLastMoveTime = async function() {
+    return unknownLastMoveTime
 }
 
 exports.setInitialTimeNull = function() {
@@ -470,7 +486,7 @@ exports.setResizeCallback = function(handleResize) {
 
 exports.forceUpdate = async function() {
     if (handleNeedsUpdate != null) {
-        handleNeedsUpdate()
+        await (handleNeedsUpdate())
     }
 }
 
