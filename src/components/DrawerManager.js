@@ -8,6 +8,7 @@ const PreferencesDrawer = require('./drawers/PreferencesDrawer')
 const GameChooserDrawer = require('./drawers/GameChooserDrawer')
 const CleanMarkupDrawer = require('./drawers/CleanMarkupDrawer')
 const AdvancedPropertiesDrawer = require('./drawers/AdvancedPropertiesDrawer')
+const gtplogger = require('../modules/gtplogger')
 
 class DrawerManager extends Component {
     constructor() {
