@@ -259,12 +259,26 @@ class InfoDrawer extends Component {
                 sabaki.resetClock()
                 clock.setPlayStarted(true)
             }
+            // for clock, determine whether any engines will be swapped or added
+            let attachedEngines = sabaki.state.attachedEngines
+            let engineChanges = true
+            for (let i = 0; i < attachedEngines.length; i++) {
+                if (attachedEngines[i] !== this.state.engines[i])
+                    engineChanges = true
+            }
+            let mode = clock.getMode()
+            let alreadyPlaying = mode === 'resume'
+            let startGame = setting.get('gtp.start_game_after_attach')
+            if (engineChanges && (alreadyPlaying || startGame)) {
+                // already playing or will start playing
+                sabaki.engineClockNeedsSync = true
+            }
+
             sabaki.attachEngines(...this.state.engines)
 
             await sabaki.waitForRender()
 
             let i = this.props.currentPlayer > 0 ? 0 : 1
-            let startGame = setting.get('gtp.start_game_after_attach')
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
                 sabaki.generateMove({followUp: true})

@@ -100,6 +100,7 @@ let data = [
                 accelerator: 'CmdOrCtrl+P',
                 click: () => {
                     const autoGenmove = setting.get('gtp.auto_genmove')
+                    sabaki.setupClockForUserMove()
                     sabaki.makeMove([-1, -1], {sendToEngine: autoGenmove})
                 }
             },

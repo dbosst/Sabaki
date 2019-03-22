@@ -943,14 +943,7 @@ class App extends Component {
         if (['play', 'autoplay'].includes(this.state.mode)) {
             if (button === 0) {
                 if (board.get(vertex) === 0) {
-                    let shouldShowClocks = clock.shouldShowClocks()
-                    let mode = clock.getMode()
-                    let canPlayResume = mode !== 'resume'
-                    if (shouldShowClocks) {
-                        this.engineClockNeedsSync = true
-                        if (canPlayResume) clock.resume()
-                        clock.setPlayStarted(true)
-                    }
+                    this.setupClockForUserMove()
                     let autoGenmove = setting.get('gtp.auto_genmove')
                     this.makeMove(vertex, {sendToEngine: autoGenmove})
                 } else if (
@@ -1111,6 +1104,25 @@ class App extends Component {
         }
 
         this.events.emit('vertexClick')
+    }
+
+    setupClockForUserMove() {
+        let shouldShowClocks = clock.shouldShowClocks()
+        let mode = clock.getMode()
+        let canPlayResume = mode !== 'resume'
+        if (shouldShowClocks) {
+            let player = this.inferredState.currentPlayer
+            let playerIndex = player > 0 ? 0 : 1
+            if (canPlayResume) {
+                this.engineClockNeedsSync = true
+                clock.setPlayStarted(true)
+            }
+            if (canPlayResume &&
+                this.attachedEngineSyncers[playerIndex] == null) {
+
+                clock.resumeOnPlayStarted()
+            }
+        }
     }
 
     handleClockEvent(eventName, o = {}) {
@@ -1380,7 +1392,6 @@ class App extends Component {
             // Send command to engine
 
             let passPlayer = pass ? player : null
-            this.engineClockNeedsSync = true
             setTimeout(() => this.generateMove({passPlayer}), setting.get('gtp.move_delay'))
         }
     }
@@ -2278,6 +2289,7 @@ class App extends Component {
             }
         })
 
+        this.engineClockNeedsSync = true
         clock.changeToPlayer(sign, {resumeAfter: true})
         this.setCurrentTreePosition(newTree, treePosition)
     }
@@ -3034,8 +3046,8 @@ class App extends Component {
             await (clock.getModeAsync().then(res => {mode = res})).catch(() => null)
             let shouldShowClocks = false
             await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
-            let canSyncTime = shouldShowClocks && !(mode === 'resume')
-            if (canSyncTime && this.engineClockNeedsSync) {
+            let shouldResume = shouldShowClocks && !(mode === 'resume')
+            if (shouldShowClocks && this.engineClockNeedsSync) {
                 let {gameTrees, gameIndex, gameCurrents, treePosition} = this.state
                 let tree = gameTrees[gameIndex]
                 let sign = this.getPlayer(tree, treePosition)
@@ -3049,7 +3061,7 @@ class App extends Component {
 
                 await (this.updateEngineClocks())
             }
-            if (canSyncTime) await (clock.resumeOnPlayStarted())
+            if (shouldResume) await (clock.resumeOnPlayStarted())
         } catch (err) {
             this.engineBusySyncing = false
             throw err
@@ -3388,8 +3400,9 @@ class App extends Component {
     }
 
     async updateEngineClocks() {
+        this.engineClockNeedsSync = false
         let shouldShowClocks
-        await (clock.shouldShowClocksAsync().then(res => {showClocks = res})).catch(() => null)
+        await (clock.shouldShowClocksAsync().then(res => {shouldShowClocks = res})).catch(() => null)
         let clockEnabled = false
         await (clock.getClockEnabledAsync().then(res => {clockEnabled = res})).catch(() => null)
         if (!shouldShowClocks || !clockEnabled) return
