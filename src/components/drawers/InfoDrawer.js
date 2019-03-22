@@ -279,13 +279,21 @@ class InfoDrawer extends Component {
             await sabaki.waitForRender()
 
             let i = this.props.currentPlayer > 0 ? 0 : 1
+            let other = i === 0 ? 1 : 0
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
                 sabaki.generateMove({followUp: true})
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {
 
-                if (useClocks) { clock.resumeOnPlayStarted() }
+                // no engines
+                if (useClocks) clock.resumeOnPlayStarted()
+            } else if (startGame && sabaki.attachedEngineSyncers[i] == null &&
+                this.state.engines != null && this.state.engines[other] != null) {
+
+                // current player is real, next player is an engine
+                // this will start the clock as soon as the engine ready
+                if (useClocks) sabaki.syncEngines()
             }
         }
 
