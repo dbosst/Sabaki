@@ -25,9 +25,9 @@ class DrawerManager extends Component {
             let otherIndex
             let otherSign
             let winner
-            if (resultString.splice(0,2) === 'B+') {
+            if (resultString.slice(0,2) === 'B+') {
                 winner = 1
-            } else if (resultString.splice(0,2) === 'W+') {
+            } else if (resultString.slice(0,2) === 'W+') {
                 winner = -1
             }
             if (winner > 0) {
