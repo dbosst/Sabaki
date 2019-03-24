@@ -356,6 +356,11 @@ class App extends Component {
             this.window.webContents.setZoomFactor(this.state.zoomFactor)
         }
 
+        if (prevState.openDrawer !== this.state.openDrawer &&
+            prevState.openDrawer === 'adjustclock') {
+                clock.resumeLast()
+        }
+
         if (prevState.mode !== this.state.mode) {
             if (this.state.mode === 'scoring') {
                 clock.pauseLast()
@@ -1880,6 +1885,8 @@ class App extends Component {
         if (['scoring', 'estimator'].includes(this.state.mode)) {
             this.setState({mode: 'play'})
         }
+
+        if (this.state.openDrawer === 'adjustclock') this.closeDrawer()
 
         let {gameTrees, gameCurrents} = this.state
         let gameIndex = gameTrees.findIndex(t => t.root.id === tree.root.id)

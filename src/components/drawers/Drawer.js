@@ -35,12 +35,13 @@ class Drawer extends Component {
         }
     }
 
-    render({type, show, children}, {hidecontent}) {
+    render({type, show, children, showPlayerBar = null}, {hidecontent}) {
         return h('section', {
             id: type,
             class: classNames({
                 drawer: true,
                 hidecontent,
+                showplayerbar: showPlayerBar,
                 show
             })
         }, children)

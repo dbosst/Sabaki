@@ -8,6 +8,7 @@ const PreferencesDrawer = require('./drawers/PreferencesDrawer')
 const GameChooserDrawer = require('./drawers/GameChooserDrawer')
 const CleanMarkupDrawer = require('./drawers/CleanMarkupDrawer')
 const AdvancedPropertiesDrawer = require('./drawers/AdvancedPropertiesDrawer')
+const AdjustClockDrawer = require('./drawers/AdjustClockDrawer')
 const gtplogger = require('../modules/gtplogger')
 
 class DrawerManager extends Component {
@@ -158,6 +159,10 @@ class DrawerManager extends Component {
                 show: openDrawer === 'advancedproperties',
                 gameTree,
                 treePosition
+            }),
+
+            h(AdjustClockDrawer, {
+                show: openDrawer === 'adjustclock'
             }),
 
             h(ScoreDrawer, {

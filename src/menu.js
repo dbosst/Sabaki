@@ -479,6 +479,11 @@ let data = [
             {
                 label: 'Rotate &Anticlockwise',
                 click: () => sabaki.rotateBoard(true)
+            },
+            {type: 'separator'},
+            {
+                label: 'Adjust &Clock…',
+                click: () => sabaki.openDrawer('adjustclock')
             }
         ]
     },

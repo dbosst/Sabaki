@@ -754,6 +754,9 @@ header, #bar .bar {
         transform: translateY(-285px);
         box-shadow: 0 0 10px rgba(0, 0, 0, .5);
     }
+    .drawer.showplayerbar {
+        transform: translateY(-325px) !important;
+    }
     .drawer h2 {
         font-weight: lighter;
     }
@@ -835,6 +838,40 @@ header, #bar .bar {
         display: inline-block;
         width: 6em;
         margin-right: 10px;
+        text-align: right;
+}
+
+#adjustclock section {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    @media screen and (max-width: 600px) {
+        #adjustclock section input { width: 60px; }
+    }
+    #adjustclock form ul li {
+        margin-bottom: 4px;
+    }
+    #adjustclock span {
+        margin-bottom: 7px;
+        text-align: center;
+    }
+    #adjustclock ul {
+        height: 160px;
+    }
+    #adjustclock ul input[type="text"] {
+        width: calc(100% - 12em - 10px);
+        max-width: 250px;
+    }
+    #adjustclock form p {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        margin: 0;
+    }
+    #adjustclock label span {
+        display: inline-block;
+        width: 8em;
+        margin-right: 20px;
         text-align: right;
 }
 
