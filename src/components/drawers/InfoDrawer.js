@@ -43,7 +43,7 @@ class InfoDrawer extends Component {
 
         this.labeledCheckBox = createTwoWayCheckBox(this)
 
-        this.validateTimeSettings = async => {
+        this.validateTimeSettings = () => {
             let {
                 blackInfiniteTime,
                 blackOvertime,
