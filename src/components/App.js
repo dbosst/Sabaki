@@ -3481,7 +3481,7 @@ class App extends Component {
 
             let sign = i === 0 ? 1 : -1
             let expired
-            await (clock.isLastPlayerClockExpiredAsync(sign).then(res => {expired = res})).catch(() => null)
+            await (clock.isPlayerClockExpiredAsync(sign).then(res => {expired = res})).catch(() => null)
             let color = i === 0 ? 'B' : 'W'
             let timeLeftArgs
             if (expired) {
