@@ -293,7 +293,11 @@ class InfoDrawer extends Component {
 
                 // current player is real, next player is an engine
                 // this will start the clock as soon as the engine ready
-                if (useClocks) sabaki.syncEngines()
+                if (useClocks) {
+                    try {
+                        sabaki.syncEngines()
+                    } catch (err) {}
+                }
             }
         }
 

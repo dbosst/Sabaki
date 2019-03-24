@@ -481,6 +481,17 @@ class App extends Component {
         clock.setPlayStarted(false)
     }
 
+    toggleClockEnabled() {
+        clock.toggleClockEnabled()
+        this.engineClockNeedsSync = true
+        this.initEngineClock({
+            engineCommands: this.state.engineCommands[0],
+            playerIndex: 0})
+        this.initEngineClock({
+            engineCommands: this.state.engineCommands[1],
+            playerIndex: 1})
+    }
+
     toggleClockPaused() {
         let mode = clock.getMode()
         if (mode === 'resume') {
@@ -3327,6 +3338,14 @@ class App extends Component {
         mainTime = Number.isFinite(mainTime) ? mainTime : 0
         numPeriods = Number.isFinite(numPeriods) ? numPeriods : 0
         periodTime  = Number.isFinite(periodTime) ? periodTime : 0
+
+        let clockEnabled
+        await (clock.getClockEnabledAsync(sign).then(res => {clockEnabled = res})).catch(() => null)
+
+        if (!clockEnabled) {
+            // don't specify any time
+            return null
+        }
 
         // all time are formatted to centiseconds
         if (kgsTimeControls) {

@@ -115,7 +115,7 @@ let data = [
             },
             {
                 label: '&Disable/Enable Clock',
-                click: () => clock.toggleClockEnabled()
+                click: () => sabaki.toggleClockEnabled()
             },
             {
                 label: 'Reset Cloc&k',
