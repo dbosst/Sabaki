@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Sabaki v0.43.0][unreleased] (Unreleased)
+## [Sabaki v0.43.1][unreleased]
+
+**Fixed**
+
+* Fix setting handicap stones not working
+
+## [Sabaki v0.43.0][v0.43.0] (2019-03-16)
 
 **Added**
 
@@ -805,7 +811,8 @@ All notable changes to this project will be documented in this file.
 
 First release
 
-[unreleased]: https://github.com/SabakiHQ/Sabaki/compare/v0.42.0...master
+[unreleased]: https://github.com/SabakiHQ/Sabaki/compare/v0.43.0...master
+[v0.43.0]: https://github.com/SabakiHQ/Sabaki/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/SabakiHQ/Sabaki/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/SabakiHQ/Sabaki/compare/v0.40.1...v0.41.0
 [v0.40.1]: https://github.com/SabakiHQ/Sabaki/compare/v0.40.0...v0.40.1

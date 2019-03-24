@@ -553,6 +553,9 @@ class InfoDrawer extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
+        if (!prevProps.show && this.props.show) {
+            this.firstFocusElement.focus()
+        }
         if (this.props.show !== prevProps.show) {
             this.setState({showSetupClock: false})
         }
@@ -992,6 +995,7 @@ class InfoDrawer extends Component {
                 h('section', {},
                     h('span', {},
                         h('img', {
+                            tabIndex: 0,
                             src: './node_modules/octicons/build/svg/chevron-down.svg',
                             width: 16,
                             height: 16,
@@ -1008,6 +1012,7 @@ class InfoDrawer extends Component {
                         }),
 
                         h('input', {
+                            ref: el => this.firstFocusElement = el,
                             type: 'text',
                             name: 'name_1',
                             placeholder: 'Black',
@@ -1042,6 +1047,7 @@ class InfoDrawer extends Component {
                         }), ' ',
 
                         h('img', {
+                            tabIndex: 0,
                             src: './node_modules/octicons/build/svg/chevron-down.svg',
                             width: 16,
                             height: 16,

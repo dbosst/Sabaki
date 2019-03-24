@@ -91,6 +91,7 @@ class App extends Component {
 
             engines: null,
             attachedEngines: [null, null],
+            engineBusy: [false, false],
             engineCommands: [[], []],
             generatingMoves: false,
             analysisTreePosition: null,
@@ -147,7 +148,6 @@ class App extends Component {
 
         window.addEventListener('load', () => {
             this.events.emit('ready')
-            this.window.show()
         })
 
         ipcRenderer.on('load-file', (evt, ...args) => {
@@ -245,16 +245,17 @@ class App extends Component {
 
                 let sign = evt.key === 'ArrowUp' ? -1 : 1
                 this.startAutoscrolling(sign)
-            } else if ((evt.ctrlKey || evt.metaKey) && ['z', 'Z', 'y'].includes(evt.key)) {
+            } else if ((evt.ctrlKey || evt.metaKey) && ['z', 'y'].includes(evt.key.toLowerCase())) {
                 if (this.state.busy > 0) return
 
                 // Hijack browser undo/redo
 
                 evt.preventDefault()
 
-                let action = evt.key === 'z' ? 'undo'
-                    : ['Z', 'y'].includes(evt.key) ? 'redo'
-                    : null
+                let step = evt.key.toLowerCase() === 'z' ? -1 : 1
+                if (evt.shiftKey) step = -step
+
+                let action = step < 0 ? 'undo' : 'redo'
 
                 if (action != null) {
                     if (helper.isTextLikeElement(document.activeElement)) {
@@ -2282,7 +2283,7 @@ class App extends Component {
 
                         setting.set('game.default_komi', value)
                     } else if (key === 'handicap') {
-                        let board = gametree.getBoard(tree, 0)
+                        let board = gametree.getBoard(tree, tree.root.id)
                         let stones = board.getHandicapPlacement(+value)
 
                         value = stones.length
@@ -2808,8 +2809,9 @@ class App extends Component {
 
             this.attachedEngineSyncers.reverse()
 
-            this.setState(({engineCommands}) => ({
+            this.setState(({engineBusy, engineCommands}) => ({
                 engineCommands: engineCommands.reverse(),
+                engineBusy: engineBusy.reverse(),
                 attachedEngines: engines
             }))
 
@@ -2827,21 +2829,32 @@ class App extends Component {
         let quitTimeout = setting.get('gtp.engine_quit_timeout')
 
         for (let i = 0; i < attachedEngines.length; i++) {
-            if (attachedEngines[i] === engines[i])
-                continue
-            if (this.attachedEngineSyncers[i])
+            if (attachedEngines[i] === engines[i]) continue
+
+            if (this.attachedEngineSyncers[i]) {
                 this.attachedEngineSyncers[i].controller.stop(quitTimeout)
+            }
 
             try {
-                let syncer = new EngineSyncer(engines[i])
+                let engine = engines[i]
+                let syncer = new EngineSyncer(engine)
                 this.attachedEngineSyncers[i] = syncer
+
+                syncer.on('busy-changed', () => {
+                    this.setState(({engineBusy}) => {
+                        let j = this.attachedEngineSyncers.indexOf(syncer)
+                        engineBusy[j] = syncer.busy
+
+                        return {engineBusy}
+                    })
+                })
 
                 syncer.controller.on('command-sent', evt => {
                     gtplogger.write({
                         type: 'stdin',
                         message: gtp.Command.toString(evt.command),
                         sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
-                        engine: engines[i].name
+                        engine: engine.name
                     })
 
                     if (evt.command.name === 'list_commands') {
@@ -2874,13 +2887,13 @@ class App extends Component {
                         type: 'stderr',
                         message: content,
                         sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
-                        engine: engines[i].name
+                        engine: engine.name
                     })
 
                     this.setState(({consoleLog}) => ({
                         consoleLog: [...consoleLog, {
                             sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
-                            name: engines[i].name,
+                            name: engine.name,
                             command: null,
                             response: {content, internal: true}
                         }]
@@ -2892,7 +2905,7 @@ class App extends Component {
                         type: 'meta',
                         message: 'Engine Started',
                         sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
-                        engine: engines[i].name
+                        engine: engine.name
                     })
                 })
 
@@ -2901,7 +2914,7 @@ class App extends Component {
                         type: 'meta',
                         message: 'Engine Stopped',
                         sign: this.attachedEngineSyncers.indexOf(syncer) === 0 ? 1 : -1,
-                        engine: engines[i].name
+                        engine: engine.name
                     })
 
                     let j = this.attachedEngineSyncers.indexOf(syncer)
