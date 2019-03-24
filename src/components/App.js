@@ -595,7 +595,7 @@ class App extends Component {
     async newFile({playSound = false, showInfo = false, suppressAskForSave = false} = {}) {
         let emptyTree = this.getEmptyGameTree()
 
-        await this.loadGameTrees([emptyTree], {suppressAskForSave})
+        await this.loadGameTrees([emptyTree], {suppressAskForSave, newGame: true})
 
         if (showInfo) this.openDrawer('info')
         if (playSound) sound.playNewGame()
@@ -683,7 +683,7 @@ class App extends Component {
         this.setBusy(false)
     }
 
-    async loadGameTrees(gameTrees, {suppressAskForSave = false} = {}) {
+    async loadGameTrees(gameTrees, {suppressAskForSave = false, newGame = false} = {}) {
         if (!suppressAskForSave && !this.askForSave()) return
         gtplogger.rotate()
 
@@ -695,7 +695,7 @@ class App extends Component {
 
         await helper.wait(setting.get('app.loadgame_delay'))
         clock.setInitialTimeNull()
-        clock.setClockEnabled(false)
+        clock.setClockEnabled(newGame)
         this.resetClock()
 
         if (gameTrees.length != 0) {

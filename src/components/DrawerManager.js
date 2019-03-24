@@ -71,6 +71,7 @@ class DrawerManager extends Component {
         this.handleGameSelect = ({selectedTree}) => {
             sabaki.closeDrawer()
             sabaki.setMode('play')
+            clock.setClockEnabled(false)
             sabaki.loadClockSetupFromTree(selectedTree)
             sabaki.setCurrentTreePosition(selectedTree, selectedTree.root.id)
         }

@@ -372,8 +372,6 @@ exports.setInitialTime = function(o = {}) {
 
     if (initialTime == null || initialTime.length !== 2) {
         initialTime = [null, null]
-    } else {
-        initialTime[playerIndex] = null
     }
 
     let playerID = o.sign === 1 ? 'b' : 'w'
@@ -399,10 +397,13 @@ exports.setInitialTime = function(o = {}) {
             playerID,
             playerText
         }
-        if (!helper.shallowEquals(initTime, initialTime[playerIndex])) {
+        if (!helper.equals(initTime, initialTime[playerIndex])) {
             initialTime[playerIndex] = initTime
             exports.setInitialTimeChanged(true)
         }
+    } else {
+        initialTime[playerIndex] = null
+        exports.setInitialTimeChanged(true)
     }
 }
 
