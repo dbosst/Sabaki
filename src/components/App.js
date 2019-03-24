@@ -712,7 +712,7 @@ class App extends Component {
 
         await helper.wait(setting.get('app.loadgame_delay'))
         clock.setInitialTimeNull()
-        clock.setClockEnabled(newGame)
+        await (clock.setClockEnabled(newGame))
         this.resetClock()
 
         if (gameTrees.length != 0) {
@@ -3228,7 +3228,7 @@ class App extends Component {
         try {
             await this.syncEngines({passPlayer})
         } catch (err) {
-            clock.pause()
+            await (clock.pause())
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
             this.setBusy(false)
@@ -3269,7 +3269,7 @@ class App extends Component {
         let board = gametree.getBoard(tree, tree.root.id)
 
         if (responseContent == null) {
-            clock.pause()
+            await (clock.pause())
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
             this.setBusy(false)
@@ -3281,7 +3281,7 @@ class App extends Component {
             if (responseContent.toLowerCase() === 'resign') {
                 dialog.showMessageBox(`${playerSyncer.engine.name} has resigned.`)
 
-                clock.pause()
+                await (clock.pause())
                 this.stopGeneratingMoves()
                 this.hideInfoOverlay()
                 this.makeResign()
@@ -3315,7 +3315,7 @@ class App extends Component {
         } else {
             if (canPlay && (doublePass || (!followUp && otherSyncer != null))) {
                 // other player is not an engine
-                clock.pause()
+                await (clock.pause())
             }
             this.stopGeneratingMoves()
             this.hideInfoOverlay()
@@ -3360,7 +3360,7 @@ class App extends Component {
         periodTime  = Number.isFinite(periodTime) ? periodTime : 0
 
         let clockEnabled
-        await (clock.getClockEnabledAsync(sign).then(res => {clockEnabled = res})).catch(() => null)
+        await (clock.getClockEnabledAsync().then(res => {clockEnabled = res})).catch(() => null)
 
         if (!clockEnabled) {
             // don't specify any time
@@ -3453,7 +3453,7 @@ class App extends Component {
                         resumeClocks = true
                     }
                     if (resumeClocks && !this.engineClockNeedsSync) {
-                        clock.resumeOnPlayStarted()
+                        await (clock.resumeOnPlayStarted())
                     }
                 }
             }
@@ -3461,9 +3461,9 @@ class App extends Component {
             // engine detached
             this.clockForEngines[playerIndex] = false
             // pause the clocks
-            clock.pause()
+            await (clock.pause())
             // do it twice - using pauseLast so we don't resumeLast
-            clock.pauseLast()
+            await (clock.pauseLast())
         }
     }
 
