@@ -261,7 +261,7 @@ class InfoDrawer extends Component {
             }
             // for clock, determine whether any engines will be swapped or added
             let attachedEngines = sabaki.state.attachedEngines
-            let engineChanges = true
+            let engineChanges = false
             for (let i = 0; i < attachedEngines.length; i++) {
                 if (attachedEngines[i] !== this.state.engines[i])
                     engineChanges = true
@@ -282,6 +282,7 @@ class InfoDrawer extends Component {
             let other = i === 0 ? 1 : 0
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
+                if (useClocks) sabaki.setupClockForEngineMove()
                 sabaki.generateMove({followUp: true})
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {
