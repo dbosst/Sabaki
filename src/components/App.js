@@ -3118,9 +3118,8 @@ class App extends Component {
                     await (clock.resetLastElapsedMoveTime(-1))
                     await (clock.setUnknownLastMoveTime(false))
                 }
-
-                await (this.updateEngineClocks())
             }
+            if (shouldShowClocks) await (this.updateEngineClocks())
             if (shouldResume) await (clock.resumeOnPlayStarted())
         } catch (err) {
             this.engineBusySyncing = false

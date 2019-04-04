@@ -215,6 +215,8 @@ class PlayBar extends Component {
 
         let clockProps = clock.getProps()
 
+        let clockEnabled = clock.getClockEnabled()
+
         // hide clocks if both are infinite
         let displayClocks = clock.shouldShowClocks() ? 'block' : 'none'
 
@@ -275,7 +277,10 @@ class PlayBar extends Component {
                 h('img', {src: './node_modules/octicons/build/svg/three-bars.svg', height: 21})
             ),
 
-            h('div', {style: {'display': displayClocks}},
+            h('div', {style: {
+                'display': displayClocks,
+                'font-style': (clockEnabled ? 'normal' : 'italic')
+                }},
                 h(gameclock, clockProps)
             )
         )
