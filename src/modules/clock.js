@@ -293,7 +293,8 @@ exports.getProps = function() {
         handlePlayerClockExpired,
         handleReset,
         handleResumed,
-        handleTenCount
+        handleTenCount,
+        handleUpdated
     }
     return props
 }
@@ -365,6 +366,11 @@ let handleResumed = function(o) {
 let handleTenCount = function(o) {
     updateLastState(o)
     handleEvent('TenCount', o)
+}
+
+// don't fire a related event, only used to get latest clock time
+let handleUpdated = function(o) {
+    updateLastState(o)
 }
 
 // helper functions to calculate clock state for App and clock
