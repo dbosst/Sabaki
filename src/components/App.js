@@ -3425,8 +3425,9 @@ class App extends Component {
                     kgsTimeControls,
                     playerIndex}).then(res => {timeSettingsArgs = res})).catch(() => null)
             }
-            if (timeSettingsCmd != null && timeSettingsArgs != null) {
-                let playerSyncer = this.attachedEngineSyncers[playerIndex]
+            let playerSyncer = this.attachedEngineSyncers[playerIndex]
+            if (timeSettingsCmd != null && timeSettingsArgs != null &&
+                playerSyncer != null) {
 
                 let response = await (playerSyncer.controller.sendCommand({
                     name: timeSettingsCmd,
