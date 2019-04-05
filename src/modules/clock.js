@@ -240,8 +240,10 @@ exports.resetLastElapsedMoveTime = async function(sign = null) {
         (sign != null && sign < 0) ? 1
         : null
     if (playerIndex == null) return
-    if (lastClock != null) lastClock[playerIndex].elapsedMoveTime = 0
-    if (lastClockOnMove != null) lastClockOnMove[playerIndex].elapsedMoveTime = 0
+    if (lastClock != null && lastClock[playerIndex] != null])
+        lastClock[playerIndex].elapsedMoveTime = 0
+    if (lastClockOnMove != null && lastClockOnMove[playerIndex] != null)
+        lastClockOnMove[playerIndex].elapsedMoveTime = 0
 }
 
 // helper functions used exclusively by PlayBar
