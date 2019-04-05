@@ -282,7 +282,7 @@ class InfoDrawer extends Component {
             let other = i === 0 ? 1 : 0
 
             if (startGame && sabaki.attachedEngineSyncers[i] != null) {
-                if (useClocks) sabaki.setupClockForEngineMove()
+                if (engineChanges && useClocks) sabaki.setupClockForEngineMove()
                 sabaki.generateMove({followUp: true})
             } else if (this.state.engines == null ||
                 !this.state.engines.some(x => x != null)) {

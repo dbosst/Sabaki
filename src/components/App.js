@@ -1137,7 +1137,6 @@ class App extends Component {
             // determine whether resuming and don't have elapsed move timing
             let mode = clock.getMode()
             let canPlayResume = mode !== 'resume'
-            let player = this.inferredState.currentPlayer
             if (canPlayResume) {
                 clock.resetLastElapsedMoveTime(1)
                 clock.resetLastElapsedMoveTime(-1)
