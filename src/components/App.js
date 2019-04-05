@@ -704,7 +704,7 @@ class App extends Component {
         if (!suppressAskForSave && !this.askForSave()) return
         gtplogger.rotate()
 
-        sound.stopTimeCountDown()
+        sound.stopTimeCountDown(0)
 
         this.setBusy(true)
         if (this.state.openDrawer !== 'gamechooser') this.closeDrawer()
@@ -1235,8 +1235,11 @@ class App extends Component {
                 initTime.periodTime > 0
             // determine if in overtime
             let inOvertime = (initTime.mainTime - clk.elapsedMainTime) <= 0
+            let periodTimeLeft = initTime.periodTime - clk.elapsedPeriodTime
             if (hasPeriodInit && initTime.periodTime >= 10) {
-                sound.playTimeCountDown()
+                let seekTime = 10 - periodTimeLeft
+                seekTime = seekTime > 0 ? seekTime : 0
+                sound.playTimeCountDown(seekTime)
             }
         }
     }
@@ -1395,7 +1398,7 @@ class App extends Component {
 
         // Play sounds
 
-        sound.stopTimeCountDown()
+        if (!expired) sound.stopTimeCountDown(0)
 
         if (!pass) {
             let delay = setting.get('sound.capture_delay_min')
@@ -1403,7 +1406,7 @@ class App extends Component {
 
             if (capture || suicide) sound.playCapture(delay)
             sound.playPachi()
-        } else {
+        } else if (!expired) {
             sound.playPass()
         }
 

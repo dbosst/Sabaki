@@ -85,7 +85,8 @@ exports.makeMove = function() {
 exports.pause = async function() {
     if (!clockEnabled) return
     mode = 'pause'
-    sound.stopTimeCountDown()
+    // for end of game on time let countdown finish
+    sound.stopTimeCountDown(2)
     await (forceUpdate())
 }
 

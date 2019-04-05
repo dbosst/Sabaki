@@ -18,8 +18,8 @@ function prepareFunction(sounds) {
     }
 }
 
-let stopPlayback = function(media) {
-    return async function() {
+let stopPlayback = async function(media, onTimeLeft = 0) {
+    if ((media.duration - media.currentTime) >= onTimeLeft) {
         media.pause()
         media.currentTime = 0
     }
@@ -34,6 +34,11 @@ exports.playPass = prepareFunction([new Audio('./data/pass.mp3')])
 exports.playNewGame = prepareFunction([new Audio('./data/newgame.mp3')])
 
 let soundTimeCountDown = new Audio('./data/timecountdown.mp3')
-exports.stopTimeCountDown = stopPlayback(soundTimeCountDown)
+exports.stopTimeCountDown = async function(onTimeLeft = 0) {
+    stopPlayback(soundTimeCountDown, onTimeLeft)
+}
 
-exports.playTimeCountDown = prepareFunction([soundTimeCountDown])
+exports.playTimeCountDown = async function(seekTime = 0) {
+    soundTimeCountDown.currentTime = seekTime
+    soundTimeCountDown.play().catch(helper.noop)
+}
