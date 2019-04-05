@@ -3291,7 +3291,7 @@ class App extends Component {
             vertex = board.coord2vertex(responseContent)
         }
 
-        let previousNode = tree.navigate(this.state.treePosition, -1, {})
+        let previousNode = tree.navigate(this.state.treePosition, 0, {})
         let previousPass = previousNode != null && ['W', 'B'].some(color =>
             previousNode.data[color] != null
             && !board.hasVertex(sgf.parseVertex(previousNode.data[color][0]))
