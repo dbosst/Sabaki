@@ -634,10 +634,11 @@ exports.getClockEnabledAsync = async function() {
 }
 
 exports.setClockEnabled = async function(val) {
-    clockEnabled = val
     if (val === false) {
         await (exports.pause())
+        clockEnabled = val
     } else {
+        clockEnabled = val
         await (forceUpdate())
     }
 }
