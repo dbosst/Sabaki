@@ -27,6 +27,11 @@ let clockEnabled,
     showClocks,
     unknownLastMoveTime
 
+// helpers for adjustPlayerClock & handleAdjust callback
+let adjustPromise,
+    adjustPromiseReject,
+    adjustPromiseResolve
+
 // helper functions used by App to interact with and modify the gameclock
 
 exports.adjustPlayerClock = async function(sign = null, action = null, val = null) {
@@ -44,7 +49,12 @@ exports.adjustPlayerClock = async function(sign = null, action = null, val = nul
     adjustAction = action
     adjustPlayerID = playerID
     adjustVal = val
+    adjustPromise = new Promise(function(resolve, reject) {
+      adjustPromiseResolve = resolve;
+      adjustPromiseReject = reject;
+    });
     await (forceUpdate())
+    return adjustPromise
 }
 
 exports.init = function() {
@@ -311,6 +321,7 @@ exports.setResizeCallback = function(handleResize) {
 let handleAdjust = function(o) {
     updateLastState(o)
     handleEvent('Adjust', o)
+    adjustPromiseResolve()
 }
 
 let handleElapsedMainTime = function(o) {

@@ -1877,6 +1877,13 @@ class App extends Component {
         await (clock.setPlayerClockTime({sign: -1, elapsedTime: whiteTime}))
     }
 
+    async setClockFromTreePosition(tree, treePosition, currents, sign, resumeAfter) {
+        await this.adjustClockToTreePosition({tree, treePosition, currents})
+        // switch to the current player
+        // change after adjusting time, since activePlayers may change
+        clock.changeToPlayer(sign, {resumeAfter});
+    }
+
     setCurrentTreePosition(tree, id, {clearCache = false,
         madeMove = false, userNav = false} = {}) {
 
@@ -1929,14 +1936,7 @@ class App extends Component {
             let resumed = (clock.getMode() === 'resume')
             if (!resumed) {
                 // adjust clock to match the time at that game position (clock replay)
-                this.adjustClockToTreePosition({
-                    tree: tree,
-                    treePosition: newTreePosition,
-                    currents: currents
-                })
-                // switch to the current player
-                // change after adjusting time, since activePlayers may change
-                clock.changeToPlayer(sign, {resumeAfter: false})
+                this.setClockFromTreePosition(tree, newTreePosition, currents, sign, false)
             }
         }
 
