@@ -635,13 +635,9 @@ exports.getClockEnabledAsync = async function() {
 }
 
 exports.setClockEnabled = async function(val) {
-    if (val === false) {
-        await (exports.pause())
-        clockEnabled = val
-    } else {
-        clockEnabled = val
-        await (forceUpdate())
-    }
+    if (val === false) await (exports.pause())
+    clockEnabled = val
+    await (forceUpdate())
 }
 
 // App sets callback used to pass gameclock events processed by clock
