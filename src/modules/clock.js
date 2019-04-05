@@ -293,8 +293,7 @@ exports.getProps = function() {
         handlePlayerClockExpired,
         handleReset,
         handleResumed,
-        handleTenCount,
-        handleUpdated
+        handleTenCount
     }
     return props
 }
