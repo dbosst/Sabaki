@@ -237,7 +237,10 @@ class PlayBar extends Component {
                         class: classNames('name', {engine: isEngine[0]}),
                         title: isEngine[0] && 'Engine'
                     },
-                    isEngine[0] && playerBusy[0] && h(TextSpinner),
+                    isEngine[0] && (
+                        (playerBusy[0] ? h(TextSpinner) :
+                            h('span', {style: {'white-space': 'pre'}}, ' '))
+                    ),
                     ' ',
                     playerNames[0] || 'Black'
                 )
@@ -251,7 +254,10 @@ class PlayBar extends Component {
                     },
                     playerNames[1] || 'White',
                     ' ',
-                    isEngine[1] && playerBusy[1] && h(TextSpinner)
+                    isEngine[1] && (
+                        (playerBusy[1] ? h(TextSpinner) :
+                            h('span', {style: {'white-space': 'pre'}}, ' '))
+                    )
                 ), ' ',
 
                 playerRanks[1] && h('span', {class: 'rank'}, playerRanks[1]), ' ',
