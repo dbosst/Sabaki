@@ -72,14 +72,14 @@ exports.initAsync = async function() {
     await forceUpdateAsync()
 }
 
-exports.makeMove = function() {
+exports.makeMoveAsync = function() {
     if (mode == null || mode === 'init' || mode === 'reset') {
-        validateClockSettingsAsync()
+        await validateClockSettingsAsync()
     }
     if (numMoves != null) {
         numMoves++
     }
-    forceUpdateAsync()
+    await forceUpdateAsync()
 }
 
 exports.pauseAsync = async function() {
@@ -230,7 +230,7 @@ exports.setPlayerClockTimeAsync = async function({sign = null, elapsedTime = nul
 
 // helpers used to sync the gameclock with App
 
-exports.changeToPlayer = function(sign = null, {resumeAfter = false} = {}) {
+exports.changeToPlayerAsync = async function(sign = null, {resumeAfter = false} = {}) {
     if (sign != null && lastActivePlayers != null &&
         lastActivePlayers.length > 0) {
 
@@ -239,9 +239,9 @@ exports.changeToPlayer = function(sign = null, {resumeAfter = false} = {}) {
             let playerID = lastActivePlayers[0]
             if (playerID != null) {
                 if (playerID !== nextPlayerID) {
-                    if (resumeAfter) exports.pauseLastAsync()
-                    exports.makeMove()
-                    if (resumeAfter) exports.resumeLastAsync()
+                    if (resumeAfter) await exports.pauseLastAsync()
+                    await exports.makeMoveAsync()
+                    if (resumeAfter) await exports.resumeLastAsync()
                 }
             }
         }

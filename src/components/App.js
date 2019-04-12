@@ -1390,7 +1390,7 @@ class App extends Component {
 
         // on clock expire, gameclock automatically removes inactive player, and
         // also gives the move timing on the expired event, so don't oveerwrite
-        if (!expired) clock.makeMove()
+        if (!expired) clock.makeMoveAsync()
         let updatedTreeInfo = this.updateMoveTiming(player, newTree, nextTreePosition)
         if (updatedTreeInfo != null) {
             let {newTree, treePosition} = updatedTreeInfo
@@ -1885,7 +1885,7 @@ class App extends Component {
         await this.adjustClockToTreePositionAsync({tree, treePosition, currents})
         // switch to the current player
         // change after adjusting time, since activePlayers may change
-        clock.changeToPlayer(sign, {resumeAfter});
+        await clock.changeToPlayerAsync(sign, {resumeAfter});
     }
 
     setCurrentTreePosition(tree, id, {clearCache = false,
@@ -2333,7 +2333,7 @@ class App extends Component {
         })
 
         this.engineClockNeedsSync = true
-        clock.changeToPlayer(sign, {resumeAfter: true})
+        clock.changeToPlayerAsync(sign, {resumeAfter: true})
         this.setCurrentTreePosition(newTree, treePosition)
     }
 
