@@ -1140,13 +1140,19 @@ class App extends Component {
         let mode = clock.getMode()
         let canPlayResume = mode !== 'resume'
         if (shouldShowClocks && canPlayResume) {
-            clock.setUnknownLastMoveTimeAsync(true)
             let player = this.inferredState.currentPlayer
             let playerIndex = player > 0 ? 0 : 1
             this.engineClockNeedsSync = true
-            clock.setPlayStartedAsync(true)
-            if (this.attachedEngineSyncers[playerIndex] == null)
-                clock.resumeOnPlayStartedAsync()
+            let resume = this.attachedEngineSyncers[playerIndex] == null
+            this.resumeClockForUserMoveAsync(resume)
+        }
+    }
+
+    async resumeClockForUserMoveAsync(resume) {
+        await clock.setUnknownLastMoveTimeAsync(true)
+        await clock.setPlayStartedAsync(true)
+        if (resume) {
+            await clock.resumeOnPlayStartedAsync()
         }
     }
 
