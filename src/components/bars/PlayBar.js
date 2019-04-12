@@ -141,7 +141,7 @@ class PlayBar extends Component {
         window.addEventListener('resize', (e) => this.resizeClock(e))
         this.resizeClock()
         clock.setResizeCallback(this.resizeClock)
-        clock.setNeedsUpdateCallback(this.clockNeedsUpdate)
+        clock.setNeedsUpdateCallback(this.clockNeedsUpdateAsync)
         this.clockNeedsUpdateAsync()
     }
 
