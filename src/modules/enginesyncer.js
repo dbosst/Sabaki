@@ -298,8 +298,14 @@ class EngineSyncer extends EventEmitter {
             promises = []
             engineBoard = new Board(board.width, board.height)
 
-            for (let {sign, vertex} of this.state.moves) {
-                engineBoard = engineBoard.makeMove(sign, vertex)
+            for (let {sign, vertex, vertices} of this.state.moves) {
+                if (vertices != null) {
+                    for (let i = 0; i < vertices.length; i++) {
+                        engineBoard.makeMove(sign, vertices[i])
+                    }
+                } else {
+                    engineBoard = engineBoard.makeMove(sign, vertex)
+                }
             }
 
             let diff = engineBoard.diff(board).filter(v => board.get(v) !== 0)
