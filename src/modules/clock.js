@@ -72,7 +72,7 @@ exports.initAsync = async function() {
     await forceUpdateAsync()
 }
 
-exports.makeMoveAsync = function() {
+exports.makeMoveAsync = async function() {
     if (mode == null || mode === 'init' || mode === 'reset') {
         await validateClockSettingsAsync()
     }
