@@ -1219,8 +1219,8 @@ class App extends Component {
         }
 
         if (eventName === 'Expired') {
-            handleClockExpiredAsync(playerID, playerIndex, playerSign,
-                otherPlayer, otherSign)
+            handleClockExpiredAsync({playerID, playerIndex, playerSign,
+                otherPlayer, otherSign})
         } else if (eventName === 'TenCount') {
             if (!setting.get('sound.countdown')) return
             // Don't play audio for engines
