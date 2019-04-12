@@ -1125,11 +1125,7 @@ class App extends Component {
             // determine whether resuming and don't have elapsed move timing
             let mode = clock.getMode()
             let canPlayResume = mode !== 'resume'
-            if (canPlayResume) {
-                clock.resetLastElapsedMoveTimeAsync(1)
-                clock.resetLastElapsedMoveTimeAsync(-1)
-                clock.setUnknownLastMoveTimeAsync(true)
-            }
+            if (canPlayResume) clock.setUnknownLastMoveTimeAsync(true)
         }
     }
 
@@ -1138,8 +1134,6 @@ class App extends Component {
         let mode = clock.getMode()
         let canPlayResume = mode !== 'resume'
         if (shouldShowClocks && canPlayResume) {
-            clock.resetLastElapsedMoveTimeAsync(1)
-            clock.resetLastElapsedMoveTimeAsync(-1)
             clock.setUnknownLastMoveTimeAsync(true)
             let player = this.inferredState.currentPlayer
             let playerIndex = player > 0 ? 0 : 1
@@ -3104,8 +3098,6 @@ class App extends Component {
                 let unknownLastMoveTime = false
                 await (clock.getUnknownLastMoveTimeAsync().then(res => {unknownLastMoveTime = res})).catch(() => null)
                 if (unknownLastMoveTime) {
-                    await (clock.resetLastElapsedMoveTimeAsync(1))
-                    await (clock.resetLastElapsedMoveTimeAsync(-1))
                     await (clock.setUnknownLastMoveTimeAsync(false))
                 }
             }

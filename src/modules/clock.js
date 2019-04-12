@@ -141,8 +141,6 @@ exports.resumeOnPlayStartedAsync = async function() {
 }
 
 exports.resumeFromPauseAsync = async function() {
-    await exports.resetLastElapsedMoveTimeAsync(1)
-    await exports.resetLastElapsedMoveTimeAsync(-1)
     await exports.setPlayStartedAsync(true)
     await exports.setUnknownLastMoveTimeAsync(true)
     await exports.setClockEnabledAsync(true)
@@ -627,6 +625,8 @@ exports.setPlayStartedAsync = async function(started) {
 }
 
 exports.setUnknownLastMoveTimeAsync = async function(val) {
+    await exports.resetLastElapsedMoveTimeAsync(1)
+    await exports.resetLastElapsedMoveTimeAsync(-1)
     unknownLastMoveTime = val
 }
 
