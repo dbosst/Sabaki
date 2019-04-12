@@ -33,7 +33,6 @@ const helper = require('../modules/helper')
 const treetransformer = require('../modules/treetransformer')
 const setting = remote.require('./setting')
 const sound = require('../modules/sound')
-const gtplogger = require('../modules/gtplogger')
 const clock = require('../modules/clock')
 
 class App extends Component {
