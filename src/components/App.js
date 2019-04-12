@@ -1156,6 +1156,45 @@ class App extends Component {
         }
     }
 
+    async handleClockExpiredAsync({playerID, playerIndex, playerSign,
+        otherPlayer, otherSign} = {}) {
+
+        let {gameTrees, gameIndex, treePosition} = this.state
+        let winningPlayer = (playerID === 'b' ? 'W' : 'B')
+        let tree = gameTrees[gameIndex]
+
+        await clock.pauseAsync()
+
+        let newTree = tree.mutate(draft => {
+            draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
+        })
+        this.setCurrentTreePosition(newTree, treePosition, {madeMove: true})
+
+        this.makeMove([-1, -1], {player: playerSign, expired: true})
+
+        this.events.emit('expired', {player: playerSign})
+
+        this.stopGeneratingMoves()
+        this.hideInfoOverlay()
+
+        if (this.attachedEngineSyncers[playerIndex]) {
+            gtplogger.write({
+                type: 'meta',
+                message: 'Engine Wins On Time',
+                sign: playerSign,
+                engine: this.state.attachedEngines[playerIndex].name
+            })
+        }
+        if (this.attachedEngineSyncers[otherIndex]) {
+            gtplogger.write({
+                type: 'meta',
+                message: 'Engine Loses On Time',
+                sign: otherSign,
+                engine: this.state.attachedEngines[otherIndex].name
+            })
+        }
+    }
+
     handleClockEvent(eventName, o = {}) {
         let {
             activePlayers = null,
@@ -1180,40 +1219,8 @@ class App extends Component {
         }
 
         if (eventName === 'Expired') {
-            let {gameTrees, gameIndex, treePosition} = this.state
-            let winningPlayer = (playerID === 'b' ? 'W' : 'B')
-            let tree = gameTrees[gameIndex]
-
-            clock.pauseAsync()
-
-            let newTree = tree.mutate(draft => {
-                draft.updateProperty(draft.root.id, 'RE', [`${winningPlayer}+Time`])
-            })
-            this.setCurrentTreePosition(newTree, treePosition, {madeMove: true})
-
-            this.makeMove([-1, -1], {player: playerSign, expired: true})
-
-            this.events.emit('expired', {player: playerSign})
-
-            this.stopGeneratingMoves()
-            this.hideInfoOverlay()
-
-            if (this.attachedEngineSyncers[playerIndex]) {
-                gtplogger.write({
-                    type: 'meta',
-                    message: 'Engine Wins On Time',
-                    sign: playerSign,
-                    engine: this.state.attachedEngines[playerIndex].name
-                })
-            }
-            if (this.attachedEngineSyncers[otherIndex]) {
-                gtplogger.write({
-                    type: 'meta',
-                    message: 'Engine Loses On Time',
-                    sign: otherSign,
-                    engine: this.state.attachedEngines[otherIndex].name
-                })
-            }
+            handleClockExpiredAsync(playerID, playerIndex, playerSign,
+                otherPlayer, otherSign)
         } else if (eventName === 'TenCount') {
             if (!setting.get('sound.countdown')) return
             // Don't play audio for engines
