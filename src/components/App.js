@@ -1219,7 +1219,7 @@ class App extends Component {
         }
 
         if (eventName === 'Expired') {
-            handleClockExpiredAsync({playerID, playerIndex, playerSign,
+            this.handleClockExpiredAsync({playerID, playerIndex, playerSign,
                 otherPlayer, otherSign})
         } else if (eventName === 'TenCount') {
             if (!setting.get('sound.countdown')) return
