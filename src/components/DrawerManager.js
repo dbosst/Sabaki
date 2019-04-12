@@ -15,7 +15,7 @@ class DrawerManager extends Component {
     constructor() {
         super()
 
-        this.handleScoreSubmit = ({resultString}) => {
+        this.handleScoreSubmit = async ({resultString}) => {
             let {gameTrees, gameIndex, treePosition} = this.props
             let tree = gameTrees[gameIndex]
             let newTree = tree.mutate(draft => {
@@ -62,7 +62,7 @@ class DrawerManager extends Component {
                 }
             }
             // Second of two consecutive pauseLastAsync()
-            clock.pauseLastAsync()
+            await clock.pauseLastAsync()
             setTimeout(() => {
                 sabaki.setMode('play')
                 sabaki.setCurrentTreePosition(newTree, treePosition)
