@@ -1201,7 +1201,7 @@ class App extends Component {
             if (this.attachedEngineSyncers[playerIndex]) {
                 gtplogger.write({
                     type: 'meta',
-                    message: 'Engine Loses On Time',
+                    message: 'Engine Wins On Time',
                     sign: playerSign,
                     engine: this.state.attachedEngines[playerIndex].name
                 })
@@ -1209,7 +1209,7 @@ class App extends Component {
             if (this.attachedEngineSyncers[otherIndex]) {
                 gtplogger.write({
                     type: 'meta',
-                    message: 'Engine Wins On Time',
+                    message: 'Engine Loses On Time',
                     sign: otherSign,
                     engine: this.state.attachedEngines[otherIndex].name
                 })
