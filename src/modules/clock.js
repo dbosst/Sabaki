@@ -95,13 +95,6 @@ exports.pauseLastAsync = async function() {
     await (exports.pauseAsync())
 }
 
-exports.resetClockAsync = async function() {
-    await exports.pauseAsync()
-    await exports.initAsync()
-    await exports.resetAsync()
-    await exports.setPlayStartedAsync(false)
-}
-
 exports.resetAsync = async function() {
     numMoves = 0
     mode = 'reset'
@@ -117,6 +110,13 @@ exports.resetAsync = async function() {
     await forceUpdateAsync()
 }
 
+exports.resetClockAsync = async function() {
+    await exports.pauseAsync()
+    await exports.initAsync()
+    await exports.resetAsync()
+    await exports.setPlayStartedAsync(false)
+}
+
 exports.resumeAsync = async function() {
     if (!clockEnabled) return
     if (mode == null || mode === 'init' || mode === 'reset') {
@@ -124,6 +124,13 @@ exports.resumeAsync = async function() {
     }
     mode = 'resume'
     await (forceUpdateAsync())
+}
+
+exports.resumeFromPauseAsync = async function() {
+    await exports.setPlayStartedAsync(true)
+    await exports.setUnknownLastMoveTimeAsync(true)
+    await exports.setClockEnabledAsync(true)
+    await exports.resumeAsync()
 }
 
 exports.resumeLastAsync = async function() {
@@ -138,13 +145,6 @@ exports.resumeOnPlayStartedAsync = async function() {
         playStarted = false
         await (exports.resumeAsync())
     }
-}
-
-exports.resumeFromPauseAsync = async function() {
-    await exports.setPlayStartedAsync(true)
-    await exports.setUnknownLastMoveTimeAsync(true)
-    await exports.setClockEnabledAsync(true)
-    await exports.resumeAsync()
 }
 
 exports.setClockModeAbsolute = function() {
@@ -529,6 +529,14 @@ exports.isPlayerClockExpiredAsync = async function(sign = null) {
 
 // helper functions to manage App and clock state
 
+exports.getClockEnabled = function() {
+    return clockEnabled
+}
+
+exports.getClockEnabledAsync = async function() {
+    return clockEnabled
+}
+
 exports.getClockMode = function() {
     return clockMode
 }
@@ -612,8 +620,19 @@ exports.getPlayerInitialTimeAsync = async function(sign) {
     return initialTime[playerIndex]
 }
 
+
+exports.getUnknownLastMoveTimeAsync = async function() {
+    return unknownLastMoveTime
+}
+
 exports.hasInitialTimeChanged = function() {
     return initialTimeChanged
+}
+
+exports.setClockEnabledAsync = async function(val) {
+    if (val === false) await (exports.pauseAsync())
+    clockEnabled = val
+    await (forceUpdateAsync())
 }
 
 exports.setInitialTimeChanged = function(val) {
@@ -630,30 +649,12 @@ exports.setUnknownLastMoveTimeAsync = async function(val) {
     unknownLastMoveTime = val
 }
 
-exports.getUnknownLastMoveTimeAsync = async function() {
-    return unknownLastMoveTime
-}
-
 exports.shouldShowClocks = function() {
     return showClocks
 }
 
 exports.shouldShowClocksAsync = async function() {
     return showClocks
-}
-
-exports.getClockEnabled = function() {
-    return clockEnabled
-}
-
-exports.getClockEnabledAsync = async function() {
-    return clockEnabled
-}
-
-exports.setClockEnabledAsync = async function(val) {
-    if (val === false) await (exports.pauseAsync())
-    clockEnabled = val
-    await (forceUpdateAsync())
 }
 
 // App sets callback used to pass gameclock events processed by clock
