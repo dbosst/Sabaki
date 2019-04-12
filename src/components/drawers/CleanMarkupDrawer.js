@@ -3,6 +3,7 @@ const {h, Component} = require('preact')
 
 const Drawer = require('./Drawer')
 
+const t = require('../../i18n').context('CleanMarkupDrawer')
 const helper = require('../../modules/helper')
 const setting = remote.require('./setting')
 
@@ -83,7 +84,7 @@ class CleanMarkupDrawer extends Component {
 
             let template = [
                 {
-                    label: 'From Current &Position',
+                    label: t('From Current &Position'),
                     click: () => doRemove(properties => {
                         return this.props.gameTree.mutate(draft => {
                             for (let prop of properties) {
@@ -93,7 +94,7 @@ class CleanMarkupDrawer extends Component {
                     })
                 },
                 {
-                    label: 'From Entire &Game',
+                    label: t('From Entire &Game'),
                     click: () => doRemove(properties => {
                         return this.props.gameTree.mutate(draft => {
                             for (let node of this.props.gameTree.listNodes()) {
@@ -124,61 +125,61 @@ class CleanMarkupDrawer extends Component {
                 show
             },
 
-            h('h2', {}, 'Clean Markup'),
+            h('h2', {}, t('Clean Markup')),
 
             h('form', {},
                 h('ul', {},
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.cross',
-                        text: 'Cross markers'
+                        text: t('Cross markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.triangle',
-                        text: 'Triangle markers'
+                        text: t('Triangle markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.square',
-                        text: 'Square markers'
+                        text: t('Square markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.circle',
-                        text: 'Circle markers'
+                        text: t('Circle markers')
                     })
                 ),
                 h('ul', {},
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.line',
-                        text: 'Line markers'
+                        text: t('Line markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.arrow',
-                        text: 'Arrow markers'
+                        text: t('Arrow markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.label',
-                        text: 'Label markers'
+                        text: t('Label markers')
                     })
                 ),
                 h('ul', {},
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.comments',
-                        text: 'Comments'
+                        text: t('Comments')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.annotations',
-                        text: 'Annotations'
+                        text: t('Annotations')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.hotspots',
-                        text: 'Hotspots markers'
+                        text: t('Hotspots markers')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.winrate',
-                        text: 'Winrate data'
+                        text: t('Winrate data')
                     }),
                     h(CleanMarkupItem, {
                         id: 'cleanmarkup.clockdata',
-                        text: 'Clock data'
+                        text: t('Clock data')
                     })
                 ),
 
@@ -187,9 +188,9 @@ class CleanMarkupDrawer extends Component {
                         type: 'button',
                         class: 'dropdown',
                         onClick: this.handleRemoveButtonClick
-                    }, 'Remove'), ' ',
+                    }, t('Remove')), ' ',
 
-                    h('button', {onClick: this.handleCloseButtonClick}, 'Close')
+                    h('button', {onClick: this.handleCloseButtonClick}, t('Close'))
                 )
             )
         )
