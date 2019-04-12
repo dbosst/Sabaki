@@ -68,7 +68,7 @@ class AdjustClockDrawer extends Component {
         }, {})
 
         this.adjustClockFromState = this.adjustClockFromState.bind(this)
-        this.updateStateFromClock = this.updateStateFromClock.bind(this)
+        this.updateStateFromClockAsync = this.updateStateFromClockAsync.bind(this)
     }
 
     adjustClockFromState(state = this.state) {
@@ -148,7 +148,8 @@ class AdjustClockDrawer extends Component {
         })
     }
 
-    updateStateFromClock() {
+    async updateStateFromClockAsync() {
+        await clock.pauseLastAsync()
         let blackElapsedMainTime,
             blackElapsedMoveTime,
             blackElapsedNumPeriods,
@@ -234,8 +235,7 @@ class AdjustClockDrawer extends Component {
     componentWillReceiveProps({gameInfo, engines, show}) {
         if (!this.props.show && show) {
             if (clock.shouldShowClocks()) {
-                clock.pauseLastAsync()
-                this.updateStateFromClock()
+                this.updateStateFromClockAsync()
             } else {
                 this.resetState()
             }
