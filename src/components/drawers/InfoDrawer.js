@@ -257,7 +257,7 @@ class InfoDrawer extends Component {
             let timeChanged = clock.hasInitialTimeChanged()
             if (timeChanged) {
                 await (clock.setClockEnabledAsync(true))
-                sabaki.resetClock()
+                await (clock.resetClockAsync())
                 await (clock.setPlayStartedAsync(true))
                 sabaki.engineClockNeedsSync = true
             }

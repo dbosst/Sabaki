@@ -119,7 +119,7 @@ let data = [
             },
             {
                 label: 'Reset Cloc&k',
-                click: () => sabaki.resetClock()
+                click: () => clock.resetClockAsync()
             },
             {type: 'separator'},
             {

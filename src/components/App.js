@@ -480,13 +480,6 @@ class App extends Component {
         this.setState({consoleLog: []})
     }
 
-    resetClock() {
-        clock.pauseAsync()
-        clock.init()
-        clock.reset()
-        clock.setPlayStartedAsync(false)
-    }
-
     toggleClockEnabled() {
         clock.toggleClockEnabled()
         this.engineClockNeedsSync = true
@@ -713,7 +706,7 @@ class App extends Component {
         await helper.wait(setting.get('app.loadgame_delay'))
         clock.setInitialTimeNull()
         await (clock.setClockEnabledAsync(newGame))
-        this.resetClock()
+        await (clock.resetClockAsync())
 
         if (gameTrees.length != 0) {
             this.detachEngines()
@@ -843,7 +836,7 @@ class App extends Component {
         clock.setInitialTime(whiteInitialTime)
 
         if (clock.hasInitialTimeChanged()) {
-            this.resetClock()
+            clock.resetClockAsync()
         }
     }
 

@@ -57,7 +57,7 @@ exports.adjustPlayerClockAsync = async function(sign = null, action = null, val 
     return adjustPromise
 }
 
-exports.init = function() {
+exports.initAsync = async function() {
     numMoves = 0
     mode = 'init'
     lastClock = null
@@ -68,8 +68,8 @@ exports.init = function() {
     adjustPlayerID = null
     adjustVal = null
 
-    validateClockSettingsAsync()
-    forceUpdateAsync()
+    await validateClockSettingsAsync()
+    await forceUpdateAsync()
 }
 
 exports.makeMove = function() {
@@ -95,7 +95,14 @@ exports.pauseLastAsync = async function() {
     await (exports.pauseAsync())
 }
 
-exports.reset = function() {
+exports.resetClockAsync = async function() {
+    await exports.pauseAsync()
+    await exports.init()
+    await exports.resetAsync()
+    await exports.setPlayStartedAsync(false)
+}
+
+exports.resetAsync = async function() {
     numMoves = 0
     mode = 'reset'
     lastClock = null
@@ -106,8 +113,8 @@ exports.reset = function() {
     adjustPlayerID = null
     adjustVal = null
 
-    validateClockSettingsAsync()
-    forceUpdateAsync()
+    await validateClockSettingsAsync()
+    await forceUpdateAsync()
 }
 
 exports.resumeAsync = async function() {
@@ -343,7 +350,7 @@ let handleInit = function(o) {
     if (handleResizeClock != null) {
         handleResizeClock()
     }
-    exports.reset()
+    exports.resetAsync()
 }
 
 let handleMadeMove = function(o) {
