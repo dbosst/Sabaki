@@ -1157,7 +1157,7 @@ class App extends Component {
     }
 
     async handleClockExpiredAsync({playerID, playerIndex, playerSign,
-        otherPlayer, otherSign} = {}) {
+        otherIndex, otherSign} = {}) {
 
         let {gameTrees, gameIndex, treePosition} = this.state
         let winningPlayer = (playerID === 'b' ? 'W' : 'B')
@@ -1220,7 +1220,7 @@ class App extends Component {
 
         if (eventName === 'Expired') {
             this.handleClockExpiredAsync({playerID, playerIndex, playerSign,
-                otherPlayer, otherSign})
+                otherIndex, otherSign})
         } else if (eventName === 'TenCount') {
             if (!setting.get('sound.countdown')) return
             // Don't play audio for engines
