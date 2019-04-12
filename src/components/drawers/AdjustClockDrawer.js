@@ -1,6 +1,7 @@
 const {h, Component} = require('preact')
 
 const Drawer = require('./Drawer')
+const t = require('../../i18n').context('AdvancedPropertiesDrawer')
 
 const clock = require('../../modules/clock')
 
@@ -8,7 +9,7 @@ class AdjustClockDrawerItem extends Component {
     render({title, children}) {
         return h('li', {},
             h('label', {},
-                h('span', {}, title + ':'),
+                h('span', {}, t(title) + t(':')),
                 children[0]
             ),
             children.slice(1)
@@ -270,7 +271,7 @@ class AdjustClockDrawer extends Component {
                 },
                 h('div', {},
                     h('span', {},
-                        'No clock has been set up in the curent game.'
+                        t('No clock has been set up in the curent game.')
                     ),
                 ),
                 h('form', {},
@@ -278,7 +279,7 @@ class AdjustClockDrawer extends Component {
                         h('button', {
                             type: 'reset',
                             onClick: this.handleCancelButtonClick
-                        }, 'Close')
+                        }, t('Close'))
                     )
                 )
             )
@@ -295,7 +296,7 @@ class AdjustClockDrawer extends Component {
                 h('div', {
                     style: {'margin-bottom': '10px', 'display': 'flex'}},
                     h('div', {style: {'flex-grow': '1'}},
-                        h('span', {}, 'Black\'s Clock (Elapsed)'),
+                        h('span', {}, t('Black\'s Clock (Elapsed)')),
                         h('ul', {},
                             h(AdjustClockDrawerItem, {title: 'Main Time'},
                                 h('input', {
@@ -342,7 +343,7 @@ class AdjustClockDrawer extends Component {
                         )
                     ),
                     h('div', {style: {'flex-grow': '2'}},
-                        h('span', {}, 'White\'s Clock (Elapsed)'),
+                        h('span', {}, t('White\'s Clock (Elapsed)')),
                         h('ul', {},
                             h(AdjustClockDrawerItem, {title: 'Main Time'},
                                 h('input', {
@@ -390,8 +391,8 @@ class AdjustClockDrawer extends Component {
                     ),
                     h('div', {style: {'flex-grow': '1'}},
                         h('p', {},
-                            h('button', {onClick: this.handleAdjustClockButtonClick}, 'Adjust'), ' ',
-                            h('button', {type: 'reset', onClick: this.handleCancelButtonClick}, 'Close')
+                            h('button', {onClick: this.handleAdjustClockButtonClick}, t('Adjust')), ' ',
+                            h('button', {type: 'reset', onClick: this.handleCancelButtonClick}, t('Close'))
                         )
                     )
                 )
