@@ -1432,7 +1432,7 @@ class App extends Component {
             // Send command to engine
 
             let passPlayer = pass ? player : null
-            setTimeout(() => this.generateMove({passPlayer}), setting.get('gtp.move_delay'))
+            setTimeout(() => this.generateMove({passPlayer, enterScoring}), setting.get('gtp.move_delay'))
         }
     }
 
@@ -3193,7 +3193,8 @@ class App extends Component {
         if (removeAnalysisData) this.setState({analysisTreePosition: null, analysis: null})
     }
 
-    async generateMove({passPlayer = null, firstMove = true, followUp = false} = {}) {
+    async generateMove({passPlayer = null, firstMove = true,
+        followUp = false, enterScoring = false} = {}) {
 
         this.closeDrawer()
 
@@ -3234,6 +3235,14 @@ class App extends Component {
             this.hideInfoOverlay()
             this.setBusy(false)
 
+            return
+        }
+
+        if (enterScoring) {
+            await (clock.pause())
+            this.stopGeneratingMoves()
+            this.hideInfoOverlay()
+            this.setBusy(false)
             return
         }
 
