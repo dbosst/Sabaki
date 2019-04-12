@@ -47,7 +47,7 @@ class DrawerManager extends Component {
                 if (sabaki.attachedEngineSyncers[playerIndex]) {
                     gtplogger.write({
                         type: 'meta',
-                        message: 'Engine Loses On Points',
+                        message: 'Engine Wins On Points',
                         sign: playerSign,
                         engine: sabaki.state.attachedEngines[playerIndex].name
                     })
@@ -55,7 +55,7 @@ class DrawerManager extends Component {
                 if (sabaki.attachedEngineSyncers[otherIndex]) {
                     gtplogger.write({
                         type: 'meta',
-                        message: 'Engine Wins On Points',
+                        message: 'Engine Loses On Points',
                         sign: otherSign,
                         engine: sabaki.state.attachedEngines[otherIndex].name
                     })
