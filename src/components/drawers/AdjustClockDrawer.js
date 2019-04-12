@@ -126,7 +126,7 @@ class AdjustClockDrawer extends Component {
                 elapsedTotalTime
             }
 
-            clock.setPlayerClockTime({sign, elapsedTime})
+            clock.setPlayerClockTimeAsync({sign, elapsedTime})
         }
     }
 
@@ -234,7 +234,7 @@ class AdjustClockDrawer extends Component {
     componentWillReceiveProps({gameInfo, engines, show}) {
         if (!this.props.show && show) {
             if (clock.shouldShowClocks()) {
-                clock.pauseLast()
+                clock.pauseLastAsync()
                 this.updateStateFromClock()
             } else {
                 this.resetState()

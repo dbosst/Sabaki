@@ -20,7 +20,7 @@ function prepareFunction(sounds) {
 
 let stopPlayback = async function(media, onTimeLeft = 0) {
     if ((media.duration - media.currentTime) >= onTimeLeft) {
-        media.pause()
+        media.pauseAsync()
         media.currentTime = 0
     }
 }

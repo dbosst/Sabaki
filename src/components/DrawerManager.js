@@ -61,8 +61,8 @@ class DrawerManager extends Component {
                     })
                 }
             }
-            // Second of two consecutive pauseLast()
-            clock.pauseLast()
+            // Second of two consecutive pauseLastAsync()
+            clock.pauseLastAsync()
             setTimeout(() => {
                 sabaki.setMode('play')
                 sabaki.setCurrentTreePosition(newTree, treePosition)
@@ -72,7 +72,7 @@ class DrawerManager extends Component {
         this.handleGameSelect = ({selectedTree}) => {
             sabaki.closeDrawer()
             sabaki.setMode('play')
-            clock.setClockEnabled(false)
+            clock.setClockEnabledAsync(false)
             sabaki.loadClockSetupFromTree(selectedTree)
             sabaki.setCurrentTreePosition(selectedTree, selectedTree.root.id)
         }

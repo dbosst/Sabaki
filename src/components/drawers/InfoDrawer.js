@@ -113,7 +113,7 @@ class InfoDrawer extends Component {
                 return
             }
 
-            await (clock.pause())
+            await (clock.pauseAsync())
 
             let emptyTree = this.props.gameTree.root.children.length === 0
             let keys = ['blackName', 'blackRank', 'whiteName', 'whiteRank',
@@ -256,9 +256,9 @@ class InfoDrawer extends Component {
             // setup the clock before the engines so we can set the engines clock
             let timeChanged = clock.hasInitialTimeChanged()
             if (timeChanged) {
-                await (clock.setClockEnabled(true))
+                await (clock.setClockEnabledAsync(true))
                 sabaki.resetClock()
-                await (clock.setPlayStarted(true))
+                await (clock.setPlayStartedAsync(true))
                 sabaki.engineClockNeedsSync = true
             }
             // for clock, determine whether any engines will be swapped or added
@@ -302,7 +302,7 @@ class InfoDrawer extends Component {
                 !this.state.engines.some(x => x != null)) {
 
                 // no engines
-                if (useClocks) await (clock.resumeOnPlayStarted())
+                if (useClocks) await (clock.resumeOnPlayStartedAsync())
             } else if (startGame && sabaki.attachedEngineSyncers[i] == null &&
                 this.state.engines != null && this.state.engines[other] != null) {
 
