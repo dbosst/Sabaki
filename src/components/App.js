@@ -1119,13 +1119,19 @@ class App extends Component {
     setupClockForEngineMove() {
         let shouldShowClocks = clock.shouldShowClocks()
         if (shouldShowClocks) {
-            clock.setPlayStartedAsync(true)
             this.engineClockNeedsSync = true
 
             // determine whether resuming and don't have elapsed move timing
             let mode = clock.getMode()
             let canPlayResume = mode !== 'resume'
-            if (canPlayResume) clock.setUnknownLastMoveTimeAsync(true)
+            this.resumeClockForEngineMoveAsync(canPlayResume)
+        }
+    }
+
+    async resumeClockForEngineMoveAsync(resume) {
+        await clock.setPlayStartedAsync(true)
+        if (resume) {
+            await clock.setUnknownLastMoveTimeAsync(true)
         }
     }
 
