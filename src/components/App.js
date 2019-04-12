@@ -2497,11 +2497,23 @@ class App extends Component {
         let newPosition
         let copied = this.copyVariationData
         let newTree = tree.mutate(draft => {
+            let clockData = ['BA', 'BE', 'BI', 'BN', 'BK', 'BP',
+                'WA', 'WE', 'WI', 'WN', 'WK', 'WP',
+                'TC', 'TN', 'TK', 'TP', 'TS', 'TY', 'TO', 'TL', 'TQ']
             let inner = (id, children) => {
                 let childIds = []
 
                 for (let child of children) {
-                    let childId = draft.appendNode(id, child.data)
+                    // remove all timing information before pasting
+                    let childData = child.data
+                    let filteredChildData = Object.keys(childData)
+                        .filter(id => clockData.indexOf(id) === -1)
+                        .reduce((acc, v) => {
+                            acc[v] = childData[v]
+                            return acc}, {}
+                        )
+
+                    let childId = draft.appendNode(id, filteredChildData)
                     childIds.push(childId)
 
                     inner(childId, child.children)
