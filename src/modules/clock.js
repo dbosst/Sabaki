@@ -351,13 +351,13 @@ let handleElapsedPeriod = function(o) {
     handleEvent('ElapsedPeriod', o)
 }
 
-let handleInit = function(o) {
+let handleInit = async function(o) {
     updateLastState(o)
     handleEvent('Init', o)
     if (handleResizeClock != null) {
         handleResizeClock()
     }
-    exports.resetAsync()
+    await exports.resetAsync()
 }
 
 let handleMadeMove = function(o) {
