@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 **Added**
 
+* Clocks. Uses custom SGF timing properties for per move timing tracking (not compatible with current SGF timing specs).
+* For engines. remove any time_settings command, and for leela-zero use the --lagbuffer command-line option to make sure the engine doesn't lose on time with lag from the GUI/CPU.
+* Can adjust the clock for tournament use (under Tools).
+
 * Ability to flip board horizontally/vertically (Thanks to [@fohristiwhirl](https://github.com/fohristiwhirl))
 * Ability to invert colors (Thanks to [@fohristiwhirl](https://github.com/fohristiwhirl))
 
