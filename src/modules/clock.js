@@ -97,7 +97,7 @@ exports.pauseLastAsync = async function() {
 
 exports.resetClockAsync = async function() {
     await exports.pauseAsync()
-    await exports.init()
+    await exports.initAsync()
     await exports.resetAsync()
     await exports.setPlayStartedAsync(false)
 }
