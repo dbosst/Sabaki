@@ -282,10 +282,10 @@ class InfoDrawer extends Component {
             sabaki.attachEngines(...this.state.engines)
 
             if (initEngineClock) {
-                await sabaki.initEngineClock({
+                await sabaki.initEngineClockAsync({
                     engineCommands: sabaki.state.engineCommands[0],
                     playerIndex: 0})
-                await sabaki.initEngineClock({
+                await sabaki.initEngineClockAsync({
                     engineCommands: sabaki.state.engineCommands[1],
                     playerIndex: 1})
             }
