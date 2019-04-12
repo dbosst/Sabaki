@@ -140,6 +140,15 @@ exports.resumeOnPlayStartedAsync = async function() {
     }
 }
 
+exports.resumeFromPauseAsync = async function() {
+    await exports.resetLastElapsedMoveTimeAsync(1)
+    await exports.resetLastElapsedMoveTimeAsync(-1)
+    await exports.setPlayStartedAsync(true)
+    await exports.setUnknownLastMoveTimeAsync(true)
+    await exports.setClockEnabledAsync(true)
+    await exports.resumeAsync()
+}
+
 exports.setClockModeAbsolute = function() {
     clockMode = 'absolutePerPlayer'
 }

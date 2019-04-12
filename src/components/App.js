@@ -481,8 +481,8 @@ class App extends Component {
     }
 
     toggleClockEnabled() {
-        clock.toggleClockEnabled()
         this.engineClockNeedsSync = true
+        clock.toggleClockEnabled()
         this.initEngineClockAsync({
             engineCommands: this.state.engineCommands[0],
             playerIndex: 0})
@@ -496,13 +496,8 @@ class App extends Component {
         if (mode === 'resume') {
             clock.pauseAsync()
         } else if (mode != null) {
-            clock.resetLastElapsedMoveTimeAsync(1)
-            clock.resetLastElapsedMoveTimeAsync(-1)
-            clock.setUnknownLastMoveTimeAsync(true)
-            clock.setPlayStartedAsync(true)
             this.engineClockNeedsSync = true
-            clock.setClockEnabledAsync(true)
-            clock.resumeAsync()
+            clock.resumeFromPauseAsync()
         }
     }
 
