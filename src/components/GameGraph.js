@@ -293,12 +293,16 @@ class GameGraph extends Component {
         let doneTreeBones = []
         let currentTrack = [...gameTree.listCurrentNodes(gameCurrents)]
 
-        // Render only nodes that are visible
+        // Render all nodes
 
-        for (let x = minX; x <= maxX; x++) {
+        let maxWidth = 0
+        for (let y = 0; y < matrix.length; y++) {
+            maxWidth = Math.max(maxWidth, matrix[y].length)
+        }
+
+        for (let x = 0; x < maxWidth; x++) {
             let column = []
-
-            for (let y = minY; y <= maxY; y++) {
+            for (let y = 0; y < matrix.length; y++) {
                 if (matrix[y] == null || matrix[y][x] == null) continue
 
                 let id = matrix[y][x]
