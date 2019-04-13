@@ -3208,6 +3208,8 @@ class App extends Component {
 
         this.setState({analysis: null, analysisTreePosition: this.state.treePosition})
 
+        if (this.state.generatingMoves) return
+
         let t = i18n.context('app.engine')
         let error = false
         let {currentPlayer} = this.inferredState
@@ -3219,8 +3221,10 @@ class App extends Component {
 
             let engineIndex = controllerIndices.find(i =>
                 this.attachedEngineSyncers[i] != null
-                && (this.attachedEngineSyncers[i].commands.includes('lz-analyze')
-                || this.attachedEngineSyncers[i].commands.includes('analyze'))
+                && (
+                    this.attachedEngineSyncers[i].commands.includes('lz-analyze')
+                    || this.attachedEngineSyncers[i].commands.includes('analyze')
+                )
             )
 
             if (engineIndex != null) {
@@ -3376,7 +3380,7 @@ class App extends Component {
             vertex = board.coord2vertex(responseContent)
         }
 
-        let previousNode = tree.navigate(this.state.treePosition, 0, {})
+        let previousNode = tree.get(this.state.treePosition)
         let previousPass = previousNode != null && ['W', 'B'].some(color =>
             previousNode.data[color] != null
             && !board.hasVertex(sgf.parseVertex(previousNode.data[color][0]))
